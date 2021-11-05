@@ -1,0 +1,33 @@
+{
+  "name": "recipe-app",
+  "version": "1.0.0",
+  "description": "An application to keep track of and manage all of your favorite recipes.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "author": "Branden McCarthy",
+  "license": "ISC",
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "jest": "^27.3.1"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "morgan": "^1.10.0",
+    "mysql": "^2.18.1",
+    "validatorjs": "^3.22.1"
+  },
+  "keywords": [
+    "full-stack",
+    "api",
+    "rest",
+    "javascript",
+    "node",
+    "express",
+    "react",
+    "mysql"
+  ]
+}
