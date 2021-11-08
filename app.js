@@ -3,7 +3,7 @@ const logger = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 3000;
+const recipeRouter = require('./src/routes/recipes');
 
 const app = express();
 
@@ -12,8 +12,6 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.get('/', (req, res) => {
-    res.send("Welcome!");
-});
+app.use('/api/recipes', recipeRouter);
 
-app.listen(PORT, console.log(`Listening on port ${PORT}`));
+module.exports = app;
