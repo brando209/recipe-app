@@ -1,12 +1,14 @@
 const Table = require('../database/Table');
 
-const Recipes = new Table('recipes');
+const Recipe = new Table('recipes');
+const Ingredient = new Table('ingredients');
+const RecipeIngredient = new Table('recipe_ingredient');
 
 function RecipeService() { }
 
 RecipeService.prototype.addRecipe = async function (recipeInfo) {
     //Add an entry in the recipe table
-    const addResult = await Recipes.addEntry({
+    const newRecipe = await Recipe.addEntry({
         title: recipeInfo.title,
         instructions: recipeInfo.instructions.join("|"),
         description: recipeInfo.description || null,
@@ -18,26 +20,24 @@ RecipeService.prototype.addRecipe = async function (recipeInfo) {
         comments: recipeInfo.comments && recipeInfo.comments.join("|")
     });
 
-    return this.getRecipe(addResult.insertId);
+    return this.getRecipe(newRecipe.insertId);
 }
 
 RecipeService.prototype.getRecipes = async function () {
-    const recipes = await Recipes.getEntries();
-    return recipes;
+    return Recipe.getEntries();
 }
 
 RecipeService.prototype.getRecipe = async function (recipeId) {
-    const recipe = await Recipes.getEntry(recipeId);
-    return recipe[0];
+    return Recipe.getEntry({ id: recipeId });
 }
 
 RecipeService.prototype.updateRecipe = async function (recipeId, updates) {
-    const updatedRecipe = await Recipes.updateEntry(recipeId, updates);
-    return Recipes.getEntry(recipeId);
+    await Recipe.updateEntry({ id: recipeId }, updates);
+    return Recipe.getEntry({ id: recipeId });
 }
 
 RecipeService.prototype.deleteRecipe = function (recipeId) {
-    return Recipes.removeEntry(recipeId);
+    return Recipe.removeEntry({ id: recipeId });
 }
 
 module.exports = RecipeService;

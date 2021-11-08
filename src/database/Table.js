@@ -1,35 +1,43 @@
 const Database = require('./Database');
 const database = new Database();
 
+const keyValueArrayFromObject = object => {
+    const array = [];
+    for(let key in object) {
+        array.push(`${key}=${object[key]}`);
+    }
+    return array;
+}
+
 class Table {
     constructor(name) {
         this.tableName = name;
     }
-
+    
     addEntry(entry) {
         return database.insert(this.tableName, entry);
     }
 
-    getEntry(id) {
-        return database.select(this.tableName, `id=${id}`);
+    hasEntry(conditions) {
+        return database.select(this.tableName, keyValueArrayFromObject(conditions))
+            .then(result => result.length > 0 ? true : false);
     }
 
-    getEntries(conditions = "*" || ["*"]) {
-        if(conditions === "*") return database.select(this.tableName);
-        return database.select(this.tableName, conditions);
+    getEntry(conditions) {
+        return database.select(this.tableName, keyValueArrayFromObject(conditions)).then(result => result[0]);
     }
 
-    updateEntry(id, updates) {
-        const updateArray = [];
-        for(let key in updates) {
-            updateArray.push(`${key}=${updates[key]}`);
-        }
-
-        return database.update(this.tableName, `id=${id}`, updateArray);
+    getEntries(conditions) {
+        if(!conditions) return database.select(this.tableName);
+        return database.select(this.tableName, keyValueArrayFromObject(conditions));
     }
 
-    removeEntry(id) {
-        return database.delete(this.tableName, `id=${id}`);
+    updateEntry(conditions, updates) {
+        return database.update(this.tableName, keyValueArrayFromObject(conditions), keyValueArrayFromObject(updates));
+    }
+
+    removeEntry(conditions) {
+        return database.delete(this.tableName, keyValueArrayFromObject(conditions));
     }
 }
 
