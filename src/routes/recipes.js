@@ -3,6 +3,7 @@ const router = express.Router();
 
 const RecipeService = require('../services/RecipeService');
 const service = new RecipeService();
+const { validateRecipe } = require('../middlewares/validation');
 
 router.get('/', async (req, res) => {
     const recipes = await service.getRecipes();
@@ -16,8 +17,7 @@ router.get('/:recipeId', async (req, res) => {
     return res.status(404).send("Recipe not found!");
 });
 
-router.post('/', async (req, res) => {
-    //Validate the recipe info contained in the request body
+router.post('/', validateRecipe, async (req, res) => {
     const recipeInfo = req.body;
 
     try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
         if(!newRecipe) return res.status(400).send("Recipe not created!");
         return res.json(newRecipe);
     } catch(err) {
-        console.log(err)
+        console.log(err);
         res.sendStatus(500);
     }
 });
