@@ -33,32 +33,34 @@ class Database {
         return this.runQuery(`INSERT INTO ${table} (${keys}) VALUES (${values});`);
     }
 
-    select(table, rows = "*" || ["*"], columns = "*" || ["*"], options = { rowOperator: 'AND' }) {
+    select(table, rows = "*" || ["*"], columns = "*" || ["*"], { rowOperator = 'AND', joins = [] } = {}) {
         rows = toArray(rows);
         columns = toArray(columns);
 
-        const SQL_Rows = rows === "*" ? "" : rows.map(escapeExpression).join(` ${options.rowOperator} `);
+        const SQL_Rows = rows === "*" ? "" : rows.map(escapeExpression).join(` ${rowOperator} `);
         const SQL_Columns = columns === "*" ? "*" : columns.join(",");
+        //TODO: Validate the `joins` array
+        const SQL_Joins = joins.length === 0 ? "" : joins.map(join => ` JOIN ${join.table} ON ${join.on}`).join(" ");
 
-        return this.runQuery(`SELECT ${SQL_Columns} FROM ${table}${SQL_Rows === "" ? "" : " WHERE "}${SQL_Rows};`);
+        return this.runQuery(`SELECT ${SQL_Columns} FROM ${table}${SQL_Joins}${SQL_Rows === "" ? "" : " WHERE "}${SQL_Rows};`);
     }
 
-    update(table, rows = "" || [""], columns = "" || [""], options = { rowOperator: 'AND' }) {
+    update(table, rows = "" || [""], columns = "" || [""], { rowOperator = 'AND' } = {}) {
         if (rows === "") return;
         rows = toArray(rows);
         columns = toArray(columns);
 
-        const SQL_Rows = rows.join(` ${options.rowOperator} `);
+        const SQL_Rows = rows.join(` ${rowOperator} `);
         const SQL_Columns = columns.map(escapeExpression).join(",");
 
         return this.runQuery(`UPDATE ${table} SET ${SQL_Columns} WHERE ${SQL_Rows};`)
     }
 
-    delete(table, rows = "" || [""], options = { rowOperator: 'AND' }) {
+    delete(table, rows = "" || [""], { rowOperator = 'AND' } = {}) {
         if (rows === "") return;
         rows = toArray(rows);
 
-        const SQL_Rows = rows === "*" ? "" : rows.join(` ${options.rowOperator} `);
+        const SQL_Rows = rows === "*" ? "" : rows.join(` ${rowOperator} `);
         return this.runQuery(`DELETE FROM ${table}${SQL_Rows === "" ? "" : ` WHERE ${SQL_Rows}`};`);
     }
 }
