@@ -33,7 +33,7 @@ class Database {
         return this.runQuery(`INSERT INTO ${table} (${keys}) VALUES (${values});`);
     }
 
-    select(table, rows = "*" || ["*"], columns = "*" || ["*"], { rowOperator = 'AND', joins = [] } = {}) {
+    select(table, rows = "*" || ["*"], columns = "*" || ["*"], { rowOperator = 'AND', joins = [], groupBy = "", orderBy = "" } = {}) {
         rows = toArray(rows);
         columns = toArray(columns);
 
@@ -41,8 +41,9 @@ class Database {
         const SQL_Columns = columns === "*" ? "*" : columns.join(",");
         //TODO: Validate the `joins` array
         const SQL_Joins = joins.length === 0 ? "" : joins.map(join => ` JOIN ${join.table} ON ${join.on}`).join(" ");
+        const SQL_Options = (groupBy !== "" ? ` GROUP BY ${groupBy}` : "") + (orderBy !== "" ? ` ORDER BY ${orderBy}` : "");
 
-        return this.runQuery(`SELECT ${SQL_Columns} FROM ${table}${SQL_Joins}${SQL_Rows === "" ? "" : " WHERE "}${SQL_Rows};`);
+        return this.runQuery(`SELECT ${SQL_Columns} FROM ${table}${SQL_Joins}${SQL_Rows === "" ? "" : " WHERE "}${SQL_Rows}${SQL_Options};`);
     }
 
     update(table, rows = "" || [""], columns = "" || [""], { rowOperator = 'AND' } = {}) {

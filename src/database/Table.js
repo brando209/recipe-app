@@ -27,8 +27,8 @@ class Table {
         return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins }).then(result => result[0]);
     }
 
-    getEntries({ rows = {}, columns = ["*"], joins = [] } = {}) {
-        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins });
+    getEntries({ rows = {}, columns = ["*"], joins = [], groupBy = "", orderBy = "" } = {}) {
+        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins, groupBy, orderBy });
     }
 
     updateEntries(rows, updates) {
