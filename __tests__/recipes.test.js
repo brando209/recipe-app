@@ -12,6 +12,12 @@ const recipes = [
         serves: 4,
         prep: { time: 5, unit: "min" },
         cook: { time: 10, unit: "min" },
+        ingredients: [
+            { name: "elbow macaroni", amount: 6, measurement: "ounce" },
+            { name: "butter", amount: 0.25, measurement: "cup" },
+            { name: "milk", amount: 0.25, measurement: "cup" },
+            { name: "shredded cheese", amount: 1, measurement: "cup" }
+        ],
         instructions: [
             "Bring water to boil.",
             "Boil macaroni for 10 minutes then strain and return to pot.",
@@ -21,7 +27,6 @@ const recipes = [
             "This recipe is cheesy.",
             "You can also make this from a box of Kraft Mac N Cheese."
         ]
-        
     }
 ]
 
@@ -38,6 +43,25 @@ afterAll(() => {
     db.closeConnection();
 })
 
+describe("POST /recipes", () => {
+    test("Response should be a new recipe", async () => {
+        const response = await request(app).post(recipeApiBaseUrl).send(recipes[0]);
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toHaveProperty('title', recipes[0].title);
+        expect(response.body).toHaveProperty('instructions');
+        expect(response.body.instructions).toHaveLength(3);
+        expect(response.body).toHaveProperty('description', recipes[0].description);
+        expect(response.body).toHaveProperty('serves', recipes[0].serves);
+        expect(response.body).toHaveProperty('ingredients');
+        expect(response.body.ingredients).toHaveProperty('milk');
+        expect(response.body.ingredients.milk).toHaveProperty('amount');
+        expect(response.body.ingredients.milk).toHaveProperty('measurement');
+        expect(response.body.ingredients.milk).toHaveProperty('size');
+        expect(response.body.ingredients).toHaveProperty('elbow macaroni');
+        expect(response.body.ingredients).toHaveProperty('butter');
+        expect(response.body.ingredients).toHaveProperty('shredded cheese');
+    });
+});
 
 describe("GET /recipes", () => {
     beforeAll(async () => {
@@ -68,25 +92,6 @@ describe("GET /recipes", () => {
         expect(response.statusCode).toBe(404);
         expect(response.body).toEqual({});
         expect(response.text).toBe("Recipe not found!");
-    });
-});
-
-describe("POST /recipes", () => {
-    test("Response should be a new recipe", async () => {
-        const response = await request(app).post(recipeApiBaseUrl).send(recipes[0]);
-        expect(response.statusCode).toBe(200);
-        expect(response.body).toEqual({
-            id: response.body.id,
-            title: 'Mac and Cheese',
-            instructions: 'Bring water to boil.|Boil macaroni for 10 minutes then strain and return to pot.|Add milk, cheese, and butter. Give it a stir.',
-            description: 'A very basic mac and cheese dish',
-            serves: 4,
-            prepTime: 5,
-            prepUnit: 'min',
-            cookTime: 10,
-            cookUnit: 'min',
-            comments: 'This recipe is cheesy.|You can also make this from a box of Kraft Mac N Cheese.'
-        });
     });
 });
 
