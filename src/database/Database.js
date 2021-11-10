@@ -1,7 +1,7 @@
 const connection = require('./connection');
 
 const toArray = val => (val && val !== "*" && val !== "" && !Array.isArray(val)) ? [val] : val;
-const escapeValue = value => connection.escape(value);
+const escapeValue = value => value.trim().toLowerCase() === 'null' ? null : connection.escape(value);
 const escapeExpression = expression => {
     const [lhs, rhs] = expression.split("=");
     return `${lhs}=${escapeValue(rhs)}`;
@@ -47,7 +47,7 @@ class Database {
     }
 
     update(table, rows = "" || [""], columns = "" || [""], { rowOperator = 'AND' } = {}) {
-        if (rows === "") return;
+        if (rows === "" || rows.length === 0) return;
         rows = toArray(rows);
         columns = toArray(columns);
 
@@ -58,7 +58,7 @@ class Database {
     }
 
     delete(table, rows = "" || [""], { rowOperator = 'AND' } = {}) {
-        if (rows === "") return;
+        if (rows === "" || rows.length === 0) return;
         rows = toArray(rows);
 
         const SQL_Rows = rows === "*" ? "" : rows.join(` ${rowOperator} `);
