@@ -1,7 +1,7 @@
 const request = require("supertest");
-const app = require("../app");
+const app = require("../../../app");
 
-const Database = require('../src/database/Database');
+const Database = require('../../database/Database');
 const db = new Database();
 
 const recipeApiBaseUrl = '/api/recipes';
