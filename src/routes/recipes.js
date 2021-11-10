@@ -47,7 +47,7 @@ router.patch('/:recipeId', async (req, res) => {
     
     try {
         const updatedRecipe = await service.updateRecipe(recipeId, req.body);
-        res.send("Recipe Updated!");
+        res.json(updatedRecipe);
     } catch(err) {
         console.log(err);
         res.sendStatus(500);
