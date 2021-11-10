@@ -18,26 +18,25 @@ class Table {
         return database.insert(this.tableName, entry);
     }
 
-    hasEntry(conditions) {
-        return database.select(this.tableName, keyValueArrayFromObject(conditions))
+    hasEntry(rows) {
+        return database.select(this.tableName, keyValueArrayFromObject(rows))
             .then(result => result.length > 0 ? true : false);
     }
 
-    getEntry(conditions) {
-        return database.select(this.tableName, keyValueArrayFromObject(conditions)).then(result => result[0]);
+    getEntry({ rows = {}, columns = ["*"], joins = [] } = {}) {
+        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins }).then(result => result[0]);
     }
 
-    getEntries(conditions) {
-        if(!conditions) return database.select(this.tableName);
-        return database.select(this.tableName, keyValueArrayFromObject(conditions));
+    getEntries({ rows = {}, columns = ["*"], joins = [] } = {}) {
+        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins });
     }
 
-    updateEntry(conditions, updates) {
-        return database.update(this.tableName, keyValueArrayFromObject(conditions), keyValueArrayFromObject(updates));
+    updateEntries(rows, updates) {
+        return database.update(this.tableName, keyValueArrayFromObject(rows), keyValueArrayFromObject(updates));
     }
 
-    removeEntry(conditions) {
-        return database.delete(this.tableName, keyValueArrayFromObject(conditions));
+    removeEntries(rows) {
+        return database.delete(this.tableName, keyValueArrayFromObject(rows));
     }
 }
 
