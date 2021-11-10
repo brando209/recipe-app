@@ -4,6 +4,7 @@
   "description": "An application to keep track of and manage all of your favorite recipes.",
   "main": "index.js",
   "scripts": {
+    "devstart": "nodemon server.js",
     "start": "node server.js",
     "test": "jest"
   },
@@ -12,6 +13,7 @@
   "devDependencies": {
     "dotenv": "^10.0.0",
     "jest": "^27.3.1",
+    "nodemon": "^2.0.15",
     "supertest": "^6.1.6"
   },
   "dependencies": {
