@@ -1,7 +1,7 @@
 const connection = require('./connection');
 
 const toArray = val => (val && val !== "*" && val !== "" && !Array.isArray(val)) ? [val] : val;
-const escapeValue = value => value.trim().toLowerCase() === 'null' ? null : connection.escape(value);
+const escapeValue = value => Number.isNaN(value) && value.trim().toLowerCase() === 'null' ? null : connection.escape(value);
 const escapeExpression = expression => {
     const [lhs, rhs] = expression.split("=");
     return `${lhs}=${escapeValue(rhs)}`;
