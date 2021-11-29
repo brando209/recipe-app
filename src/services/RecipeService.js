@@ -8,7 +8,7 @@ const columnsArray = [
     'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments',
     'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
     'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
-    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "amount", ri.amount, "measurement", ri.measurement, "size", ri.size)) as ingredients'
+    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "amount", ri.amount, "measurement", ri.measurement, "size", ri.size)) as ingredients'
 ];
 
 const joinsArray = [{
