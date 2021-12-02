@@ -22,8 +22,8 @@ class Table {
         return database.insert(this.tableName, entry);
     }
 
-    hasEntry(rows) {
-        return database.select(this.tableName, keyValueArrayFromObject(rows))
+    hasEntry(rows, options = { rowOperator: 'AND' }) {
+        return database.select(this.tableName, keyValueArrayFromObject(rows), '*', options)
             .then(result => result.length > 0 ? true : false);
     }
 
