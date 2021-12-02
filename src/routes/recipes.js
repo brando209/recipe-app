@@ -1,9 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
+
 const RecipeService = require('../services/RecipeService');
 const service = new RecipeService();
+
 const { validateRecipe } = require('../middlewares/validation');
+const { authorizeJWT } = require('../middlewares/authorization');
+
+router.use(authorizeJWT);
 
 router.get('/', async (req, res) => {
     const recipes = await service.getRecipes();
