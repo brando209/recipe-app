@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const recipeRouter = require('./src/routes/recipes');
 const ingredientRouter = require('./src/routes/ingredients');
+const authRouter = require('./src/routes/authentication');
 
 const app = express();
 
@@ -15,5 +16,6 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/recipes', recipeRouter);
 app.use('/api/ingredients', ingredientRouter);
+app.use('/api/auth', authRouter);
 
 module.exports = app;

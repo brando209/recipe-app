@@ -22,6 +22,44 @@ const validateRecipe = (req, res, next) => {
     });
 }
 
+const validateRegister = (req, res, next) => {
+    const validationRule = {
+        "firstName": "required|string|min:3|max:32",
+        "lastName": "required|string|min:3|max:32",
+        "userName": "required|string|min:3|max:32",
+        "email": "required|email",
+        "password": "required|string|min:6|max:64",
+    }
+
+    const bodyObj = JSON.parse(JSON.stringify(req.body));
+
+    validator(bodyObj, validationRule, {}, (err, status) => {
+        if (!status) {
+            res.status(412).send({ success: false, message: 'Validation failed', data: err });
+        } else {
+            next();
+        }
+    });
+}
+
+const validateLogin = (req, res, next) => {
+    const validationRule = {
+        "userName": "required_without:email|string|min:3|max:32",
+        "email": "required_without:userName|email",
+        "password": "required|string|min:6|max:64",
+    }
+
+    const bodyObj = JSON.parse(JSON.stringify(req.body));
+
+    validator(bodyObj, validationRule, {}, (err, status) => {
+        if (!status) {
+            res.status(412).send({ success: false, message: 'Validation failed', data: err });
+        } else {
+            next();
+        }
+    });
+}
+
 module.exports = {
-    validateRecipe
+    validateRecipe, validateRegister, validateLogin
 }
