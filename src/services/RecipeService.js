@@ -2,10 +2,11 @@ const Table = require('../database/Table');
 
 const Recipe = new Table('recipes');
 const Ingredient = new Table('ingredients');
-const RecipeIngredient = new Table('recipe_ingredient');
+const RecipeIngredient = new Table('recipe_ingredient')
+const UserRecipe = new Table('user_recipe');
 
 const columnsArray = [
-    'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments',
+    'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments', 'SUM(DISTINCT u_r.favorite) as favorite',
     'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
     'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
     'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "amount", ri.amount, "measurement", ri.measurement, "size", ri.size)) as ingredients'
@@ -17,11 +18,14 @@ const joinsArray = [{
 }, {
     table: `${Ingredient.tableName} i`,
     on: 'i.id = ri.ingredient_id'
+}, {
+    table: `${UserRecipe.tableName} u_r`,
+    on: `u_r.recipe_id = recipes.id`
 }];
 
 function RecipeService() { }
 
-RecipeService.prototype.addRecipe = async function (recipeInfo) {
+RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
     //Add an entry in the recipe table
     const newRecipe = await Recipe.addEntry({
         title: recipeInfo.title,
@@ -34,6 +38,9 @@ RecipeService.prototype.addRecipe = async function (recipeInfo) {
         serves: recipeInfo.serves,
         comments: recipeInfo.comments && recipeInfo.comments.join("|")
     });
+
+    //Add entry to user_recipe table which relates this recipe to the user who created it
+    await UserRecipe.addEntry({ user_id: creatorId, recipe_id: newRecipe.insertId });
 
     //Add entries into the ingredients table as well as the recipe_ingredient table
     for (let ingredient of recipeInfo.ingredients) {
@@ -59,8 +66,9 @@ RecipeService.prototype.addRecipe = async function (recipeInfo) {
     return this.getRecipe(newRecipe.insertId);
 }
 
-RecipeService.prototype.getRecipes = async function () {
+RecipeService.prototype.getRecipes = async function (userId) {
     const recipes = await Recipe.getEntries({
+        rows: { 'u_r.user_id': userId },
         columns: columnsArray,
         joins: joinsArray,
         groupBy: 'recipes.id'
@@ -74,13 +82,14 @@ RecipeService.prototype.getRecipes = async function () {
         cook: JSON.parse(recipe.cook),
         ingredients: JSON.parse(recipe.ingredients),
         instructions: recipe.instructions.split("|"),
-        comments: recipe.comments && recipe.comments.split("|")
+        comments: recipe.comments && recipe.comments.split("|"),
+        favorite: recipe.favorite ? true : false
     }))
 }
 
-RecipeService.prototype.getRecipe = async function (recipeId) {
+RecipeService.prototype.getRecipe = async function (recipeId, userId) {
     const recipe = await Recipe.getEntry({
-        rows: { 'recipes.id': recipeId },
+        rows: { 'recipes.id': recipeId, 'u_r.user_id': userId },
         columns: columnsArray,
         joins: joinsArray
     });
@@ -93,14 +102,17 @@ RecipeService.prototype.getRecipe = async function (recipeId) {
         cook: JSON.parse(recipe.cook),
         ingredients: JSON.parse(recipe.ingredients),
         instructions: recipe.instructions.split("|"),
-        comments: recipe.comments && recipe.comments.split("|")
+        comments: recipe.comments && recipe.comments.split("|"),
+        favorite: recipe.favorite ? true : false
     }
 }
 
-RecipeService.prototype.updateRecipe = async function (recipeId, updates) {
-    const { title, description, instructions, comments, serves, prep, cook, ingredients } = updates;
-
-    await Recipe.updateEntries({ id: recipeId }, {
+RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId) {
+    const { title, description, instructions, comments, serves, prep, cook, ingredients, favorite } = updates;
+    const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
+    
+    //Update recipe information
+    isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, {
         title, description, serves,
         instructions: instructions?.join("|"),
         comments: comments?.join("|"),
@@ -108,6 +120,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates) {
         cookTime: cook?.time, cookUnit: cook?.unit,
     });
 
+    //Update ingredient information
     for (let ingredientName in ingredients) {
         const ingredient = await Ingredient.getEntry({ rows: { name: ingredientName } });
         const isRemoving = ingredients[ingredientName] === null;
@@ -116,7 +129,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates) {
         
         const ingredientId = ingredient ? ingredient.id : await Ingredient.addEntry({ name: ingredientName }).then(entry => entry.insertId);
         
-        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredient.id } });
+        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredient?.id } });
 
         if(existsInRecipe && isRemoving) {
             await RecipeIngredient.removeEntries({ recipe_id: recipeId, ingredient_id: ingredientId });
@@ -145,6 +158,9 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates) {
             size: ingredientSize,
         })
     }
+
+    //Update favorited recipe
+    favorite !== undefined && UserRecipe.updateEntries({ user_id: userId, recipe_id: recipeId }, { favorite: favorite ? 1 : 0 });
 
     return this.getRecipe(recipeId);
 }
