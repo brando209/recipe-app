@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const Table = require('../database/Table');
 
 // Make sure the jwt is provided and is valid
 const authorizeJWT = (req, res, next) => {
@@ -16,6 +17,15 @@ const authorizeJWT = (req, res, next) => {
     }); 
 }
 
+const authorizeUser = async (req, res, next) => {
+    const userRecipe = new Table('user_recipe');
+
+    const authorized = await userRecipe.hasEntry({ user_id: req.user.id, recipe_id: req.params.recipeId });
+    if(!authorized) return res.status(401).send("You do not have permission to view or edit this recipe.");
+
+    next();
+}
+
 module.exports = {
-    authorizeJWT
+    authorizeJWT, authorizeUser
 }
