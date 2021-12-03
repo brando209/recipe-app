@@ -5,7 +5,6 @@ const keyValueArrayFromObject = object => {
     const array = [];
     for(let key in object) {
         if(object[key] === undefined) {
-            console.log(key, "undefined");
             continue;
         }
         array.push(`${key}=${object[key]}`);
