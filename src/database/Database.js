@@ -1,7 +1,7 @@
 const connection = require('./connection');
 
 const toArray = val => (val && val !== "*" && val !== "" && !Array.isArray(val)) ? [val] : val;
-const escapeValue = value => Number.isNaN(Number(value)) && (value === null || value.trim().toLowerCase() === 'null') ? null : connection.escape(value);
+const escapeValue = value => Number.isNaN(Number(value)) && (value === null || value === undefined || value.trim().toLowerCase() === 'null') ? null : connection.escape(value);
 const escapeExpression = expression => {
     const [lhs, rhs] = expression.split("=");
     return `${lhs}=${escapeValue(rhs)}`;
@@ -40,7 +40,7 @@ class Database {
         const SQL_Rows = rows === "*" ? "" : rows.map(escapeExpression).join(` ${rowOperator} `);
         const SQL_Columns = columns === "*" ? "*" : columns.join(",");
         //TODO: Validate the `joins` array
-        const SQL_Joins = joins.length === 0 ? "" : joins.map(join => ` JOIN ${join.table} ON ${join.on}`).join(" ");
+        const SQL_Joins = joins.length === 0 ? "" : joins.map(join => `${join.type || ''} JOIN ${join.table} ON ${join.on}`).join(" ");
         const SQL_Options = (groupBy !== "" ? ` GROUP BY ${groupBy}` : "") + (orderBy !== "" ? ` ORDER BY ${orderBy}` : "");
 
         return this.runQuery(`SELECT ${SQL_Columns} FROM ${table}${SQL_Joins}${SQL_Rows === "" ? "" : " WHERE "}${SQL_Rows}${SQL_Options};`);
