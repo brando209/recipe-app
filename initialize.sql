@@ -1,3 +1,12 @@
+CREATE TABLE users(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    firstName VARCHAR(32) NOT NULL,
+    lastName VARCHAR(32) NOT NULL,
+    userName VARCHAR(32) NOT NULL,
+    email    VARCHAR(64) NOT NULL,
+    password VARCHAR(64) NOT NULL
+);
+
 CREATE TABLE recipes(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(32) NOT NULL,
@@ -9,6 +18,17 @@ CREATE TABLE recipes(
     cookTime INT NOT NULL,
     cookUnit ENUM('min', 'hr') DEFAULT 'min',
     comments TEXT
+    photoId INT,
+
+    FOREIGN KEY (photoId) REFERENCES files(id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_recipe(
+    user_id INT NOT NULL,
+    recipe_id INT NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
 );
 
 CREATE TABLE ingredients(
@@ -26,4 +46,10 @@ CREATE TABLE recipe_ingredient(
 
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
+);
+
+CREATE TABLE files(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    path VARCHAR(255) NOT NULL,
+    mimetype VARCHAR(32)
 );

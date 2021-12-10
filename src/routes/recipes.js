@@ -6,6 +6,7 @@ const service = new RecipeService();
 
 const { validateRecipe } = require('../middlewares/validation');
 const { authorizeJWT, authorizeUser } = require('../middlewares/authorization');
+const upload = require('../middlewares/upload');
 
 router.use(authorizeJWT);
 
@@ -21,12 +22,24 @@ router.get('/:recipeId', authorizeUser, async (req, res) => {
     return res.status(404).send("Recipe not found!");
 });
 
-router.post('/', validateRecipe, async (req, res) => {
+router.post('/', upload.single('photo'), validateRecipe, async (req, res) => {
     const recipeInfo = req.body;
+
+    console.log(recipeInfo);
+    console.log(req.file);
+
+    if(req.file) {
+        //Remove 'public/' from path when storing in db
+        recipeInfo.photo = {
+            path: req.file.path.substring(req.file.path.indexOf('/')+1),
+            mimetype: req.file.mimetype
+        }
+    } else delete recipeInfo.photo;
 
     try {
         const newRecipe = await service.addRecipe(recipeInfo, req.user.id);
         if(!newRecipe) return res.status(400).send("Recipe not created!");
+
         return res.json(newRecipe);
     } catch(err) {
         console.log(err);

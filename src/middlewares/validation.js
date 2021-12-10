@@ -9,9 +9,16 @@ const validateRecipe = (req, res, next) => {
         "ingredients.*.amount":         "numeric",
         "ingredients.*.measurement":    "in:teaspoon,tablespoon,cup,ounce,pound,gram",
         "ingredients.*.size":           "in:small,medium,large",
+        "comments":                     "array"
     }
 
     const body = JSON.parse(JSON.stringify(req.body));
+    body.prep = JSON.parse(body.prep);
+    body.cook = JSON.parse(body.cook);
+    body.instructions = JSON.parse(body.instructions);
+    body.ingredients = JSON.parse(body.ingredients);
+    body.comments = (body.comments && JSON.parse(body.comments)) || null;
+    req.body = body;
 
     validator(body, validationRule, {}, (err, success) => {
         if (!success) {
