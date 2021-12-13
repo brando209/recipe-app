@@ -2,15 +2,16 @@ const express = require('express');
 const router = express.Router();
 
 const { validateRegister, validateLogin} = require('../middlewares/validation');
-const AuthService = require('../services/AuthService');
-const service = new AuthService();
+const { authorizeJWT } = require('../middlewares/authorization');
+
+const UserService = require('../services/UserService');
+const service = new UserService();
 
 router.post('/register', validateRegister, async (req, res) => {
     const newUser = req.body;
     try {
-        const userRecord = await service.register(newUser);
-        delete userRecord.password;
-        return res.status(200).send(userRecord);
+        const userRecord = await service.createUser(newUser);
+        return res.status(200).json(userRecord);
     } catch(err) {
         return res.status(400).send(err.message);
     }
@@ -25,7 +26,16 @@ router.post('/login', validateLogin, async (req, res) => {
         })
         return res.status(200).json({ user, token });
     } catch(err) {
-        return res.status(401).json(err.message);
+        return res.status(401).send(err.message);
+    }
+});
+
+router.get('/login', authorizeJWT, async (req, res) => {
+    try {
+        const user = await service.getUser(req.user.id);
+        return res.status(200).json(user);
+    } catch(err) {
+        return res.status(401).send(err.message);
     }
 });
 
