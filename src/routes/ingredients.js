@@ -6,7 +6,6 @@ const service = new IngredientService();
 
 router.get('/', async (req, res) => {
     const ingredients = await service.getIngredients();
-    console.log(ingredients);
     return res.send(ingredients);
 });
 

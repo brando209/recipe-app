@@ -32,7 +32,6 @@ const joinsArray = [{
 function RecipeService() { }
 
 RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
-    console.log(recipeInfo);
     //Add entry to files table if photo is present
     let file = null;
     if(recipeInfo.photo) {

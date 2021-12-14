@@ -25,9 +25,6 @@ router.get('/:recipeId', authorizeUser, async (req, res) => {
 router.post('/', upload.single('photo'), validateRecipe, async (req, res) => {
     const recipeInfo = req.body;
 
-    console.log(recipeInfo);
-    console.log(req.file);
-
     if(req.file) {
         //Remove 'public/' from path when storing in db
         recipeInfo.photo = {
