@@ -37,7 +37,7 @@ UserService.prototype.login = async function (credentials) {
     delete user.password;
     user.token = generateToken(user);
 
-    return { user };
+    return user;
 }
 
 UserService.prototype.getUser = async function (userId) {
@@ -48,7 +48,7 @@ UserService.prototype.getUser = async function (userId) {
 
     delete user.password;
 
-    return { user };
+    return user;
 }
 
 UserService.prototype.updateUser = async function (userId, updates) {

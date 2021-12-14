@@ -12,6 +12,7 @@ const authorizeJWT = (req, res, next) => {
         if(err) {
             return res.status(403).send(err.message);
         }
+        user.token = token;
         req.user = user;
         next();
     }); 

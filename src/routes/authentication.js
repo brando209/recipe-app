@@ -19,12 +19,12 @@ router.post('/register', validateRegister, async (req, res) => {
 
 router.post('/login', validateLogin, async (req, res) => {
     try {
-        const { user, token } = await service.login({
+        const user = await service.login({
             userName: req.body.userName,
             email: req.body.email,
             password: req.body.password
         })
-        return res.status(200).json({ user, token });
+        return res.status(200).json(user);
     } catch(err) {
         return res.status(401).send(err.message);
     }
@@ -33,7 +33,7 @@ router.post('/login', validateLogin, async (req, res) => {
 router.get('/login', authorizeJWT, async (req, res) => {
     try {
         const user = await service.getUser(req.user.id);
-        return res.status(200).json(user);
+        return res.status(200).json({...user, token: req.user.token});
     } catch(err) {
         return res.status(401).send(err.message);
     }
