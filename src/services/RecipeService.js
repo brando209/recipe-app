@@ -4,11 +4,11 @@ const Recipe = new Table('recipes');
 const Ingredient = new Table('ingredients');
 const RecipeIngredient = new Table('recipe_ingredient')
 const UserRecipe = new Table('user_recipe');
-const Files = new Table('files');
+const Photo = new Table('photos');
 
 const columnsArray = [
     'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments', 'SUM(DISTINCT u_r.favorite) as favorite',
-    'JSON_OBJECT("path", files.path, "mimetype", files.mimetype) as photo',
+    'JSON_OBJECTAGG("data", JSON_OBJECT("path", p.path, "mimetype", p.mimetype)) as photo',
     'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
     'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
     'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "amount", ri.amount, "measurement", ri.measurement, "size", ri.size)) as ingredients'
@@ -24,20 +24,14 @@ const joinsArray = [{
     table: `${UserRecipe.tableName} u_r`,
     on: `u_r.recipe_id = recipes.id`
 }, {
-    table: `${Files.tableName}`,
-    on: `recipes.photoId = files.id`,
+    table: `${Photo.tableName} p`,
+    on: `p.recipeId = recipes.id`,
     type: 'LEFT'
 }];
 
 function RecipeService() { }
 
 RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
-    //Add entry to files table if photo is present
-    let file = null;
-    if(recipeInfo.photo) {
-        file = await Files.addEntry(recipeInfo.photo);
-    }
-
     //Add an entry in the recipe table
     const newRecipe = await Recipe.addEntry({
         title: recipeInfo.title,
@@ -48,9 +42,14 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
         cookTime: recipeInfo.cook.time || 0,
         cookUnit: recipeInfo.cook.unit,
         serves: recipeInfo.serves,
-        comments: (recipeInfo.comments && recipeInfo.comments.length > 0) ? recipeInfo.comments.join("|") : null,
-        photoId: file?.insertId || null
+        comments: (recipeInfo.comments && recipeInfo.comments.length > 0) ? recipeInfo.comments.join("|") : null
     });
+
+    //Add entry to files table if photo is present
+    let file = null;
+    if(recipeInfo.photo) {
+        file = await Photo.addEntry({ ...recipeInfo.photo, recipeId: newRecipe.insertId });
+    }
 
     //Add entry to user_recipe table which relates this recipe to the user who created it
     await UserRecipe.addEntry({ user_id: creatorId, recipe_id: newRecipe.insertId });
@@ -88,7 +87,7 @@ RecipeService.prototype.getRecipes = async function (userId) {
     });
 
     if (!recipes.length) return;
-
+    
     return recipes.map(recipe => ({
         ...recipe,
         prep: JSON.parse(recipe.prep),
@@ -97,7 +96,7 @@ RecipeService.prototype.getRecipes = async function (userId) {
         instructions: recipe.instructions.split("|"),
         comments: recipe.comments && recipe.comments.split("|"),
         favorite: recipe.favorite ? true : false,
-        photo: JSON.parse(recipe.photo)
+        photo: JSON.parse(recipe.photo).data
     }))
 }
 
@@ -118,7 +117,7 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
         instructions: recipe.instructions.split("|"),
         comments: recipe.comments && recipe.comments.split("|"),
         favorite: recipe.favorite ? true : false,
-        photo: JSON.parse(recipe.photo)
+        photo: JSON.parse(recipe.photo).data
     }
 }
 

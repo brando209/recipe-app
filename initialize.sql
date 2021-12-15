@@ -18,9 +18,6 @@ CREATE TABLE recipes(
     cookTime INT NOT NULL,
     cookUnit ENUM('min', 'hr') DEFAULT 'min',
     comments TEXT
-    photoId INT,
-
-    FOREIGN KEY (photoId) REFERENCES files(id) ON DELETE CASCADE
 );
 
 CREATE TABLE user_recipe(
@@ -48,8 +45,11 @@ CREATE TABLE recipe_ingredient(
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
 );
 
-CREATE TABLE files(
+CREATE TABLE photos(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     path VARCHAR(255) NOT NULL,
-    mimetype VARCHAR(32)
+    mimetype VARCHAR(32),
+    recipeId INT NOT NULL,
+
+    FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE 
 );
