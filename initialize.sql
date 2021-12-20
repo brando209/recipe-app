@@ -23,6 +23,7 @@ CREATE TABLE recipes(
 CREATE TABLE user_recipe(
     user_id INT NOT NULL,
     recipe_id INT NOT NULL,
+    favorite TINYINT NOT NULL DEFAULT 0,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE

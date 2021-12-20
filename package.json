@@ -6,7 +6,8 @@
   "scripts": {
     "devstart": "nodemon server.js",
     "start": "node server.js",
-    "test": "jest"
+    "test": "jest",
+    "build:ui": "rm -rf build && cd ./client && npm run build --prod && cp -r build ../"
   },
   "author": "Branden McCarthy",
   "license": "ISC",
@@ -25,6 +26,10 @@
     "multer": "^1.4.4",
     "mysql": "^2.18.1",
     "validatorjs": "^3.22.1"
+  },
+  "engines": {
+    "node": "16.5.x",
+    "npm": "7.19.x"
   },
   "keywords": [
     "full-stack",

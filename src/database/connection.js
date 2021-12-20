@@ -7,6 +7,6 @@ const connectionOptions = {
     database: process.env.NODE_ENV === 'test' ? process.env.DB_TEST : process.env.DB_NAME
 };
 
-const connection = mysql.createConnection(connectionOptions);
+const connection = process.env.JAWSDB_URL ? mysql.createConnection(process.env.JAWSDB_URL) : mysql.createConnection(connectionOptions);
 
 module.exports = connection;
