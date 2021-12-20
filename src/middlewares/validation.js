@@ -22,7 +22,7 @@ const validateRecipe = (req, res, next) => {
 
     validator(body, validationRule, {}, (err, success) => {
         if (!success) {
-            res.status(412).send({ success: false, message: 'Validation failed', data: err.errors });
+            res.status(412).send("Validation failed.");
         } else {
             next();
         }
@@ -42,7 +42,7 @@ const validateRegister = (req, res, next) => {
 
     validator(bodyObj, validationRule, {}, (err, status) => {
         if (!status) {
-            res.status(412).send({ success: false, message: 'Validation failed', data: err });
+            res.status(412).send("Validation failed.");
         } else {
             next();
         }
@@ -60,7 +60,7 @@ const validateLogin = (req, res, next) => {
 
     validator(bodyObj, validationRule, {}, (err, status) => {
         if (!status) {
-            res.status(412).send({ success: false, message: 'Validation failed', data: err });
+            res.status(412).send("Validation failed.");
         } else {
             next();
         }
