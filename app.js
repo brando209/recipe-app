@@ -2,7 +2,10 @@ const express = require('express');
 const logger = require('morgan');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+
+if(process.env.NODE_ENV !== "production") {
+    require('dotenv').config();
+}
 
 const recipeRouter = require('./src/routes/recipes');
 const ingredientRouter = require('./src/routes/ingredients');
