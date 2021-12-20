@@ -125,7 +125,6 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
     const { title, description, instructions, comments, serves, prep, cook, ingredients, favorite } = updates;
     const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
     
-    console.log(updates);
     //Update recipe information
     isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, {
         title, description, serves,
