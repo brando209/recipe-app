@@ -46,6 +46,20 @@ CREATE TABLE recipe_ingredient(
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE
 );
 
+CREATE TABLE categories(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(32) NOT NULL,
+    type ENUM('cuisine', 'flavor', 'dish', 'meal', 'other') default 'other'
+);
+
+CREATE TABLE recipe_category(
+    recipe_id INT NOT NULL,
+    category_id INT NOT NULL,
+
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+)
+
 CREATE TABLE photos(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     path VARCHAR(255) NOT NULL,
