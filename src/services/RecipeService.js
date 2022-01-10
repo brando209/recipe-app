@@ -160,7 +160,7 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 }
 
 RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId) {
-    const { title, description, instructions, comments, serves, prep, cook, ingredients, favorite } = updates;
+    const { title, description, instructions, comments, categories, serves, prep, cook, ingredients, favorite } = updates;
     const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
     
     //Update recipe information
@@ -181,7 +181,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
         
         const ingredientId = ingredient ? ingredient.id : await Ingredient.addEntry({ name: ingredientName }).then(entry => entry.insertId);
         
-        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredient?.id } });
+        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredientId } });
 
         if(existsInRecipe && isRemoving) {
             await RecipeIngredient.removeEntries({ recipe_id: recipeId, ingredient_id: ingredientId });
@@ -209,6 +209,30 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
             measurement: ingredientMeasurement,
             size: ingredientSize,
         })
+    }
+
+    //Update category information
+    for(let categoryName in categories) {
+        const category = await Category.getEntry({ rows: { name: categoryName } });
+        const isRemoving = categories[categoryName] === null;
+
+        if(!category && isRemoving) continue;
+
+        const categoryId = category ? category.id : await Category.addEntry({ 
+            name: categoryName, 
+            type: categories[categoryName].type ? categories[categoryName].type : 'other'
+        }).then(entry => entry.insertId);
+
+        const existsInRecipe = await RecipeCategory.getEntry({ rows: { recipe_id: recipeId, category_id: categoryId } });
+
+        if(existsInRecipe && isRemoving) {
+            await RecipeCategory.removeEntries({ recipe_id: recipeId, category_id: categoryId });
+            continue;
+        }
+
+        if(!existsInRecipe) {
+            await RecipeCategory.addEntry({ recipe_id: recipeId, category_id: categoryId });
+        }
     }
 
     //Update favorited recipe
