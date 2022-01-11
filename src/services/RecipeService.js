@@ -10,7 +10,6 @@ const Photo = new Table('photos');
 
 const columnsArray = [
     'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments', 'SUM(DISTINCT u_r.favorite) as favorite',
-    'JSON_ARRAYAGG(JSON_OBJECT("name", c.name, "type", c.type)) as categories',
     'JSON_OBJECTAGG("data", JSON_OBJECT("path", p.path, "mimetype", p.mimetype)) as photo',
     'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
     'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
@@ -30,13 +29,6 @@ const joinsArray = [{
     table: `${Photo.tableName} p`,
     on: 'p.recipeId = recipes.id',
     type: 'LEFT'
-}, {
-    table: `${RecipeCategory.tableName} r_c`,
-    on: 'r_c.recipe_id = recipes.id',
-    type: "LEFT" 
-}, {
-    table: `${Category.tableName} c`,
-    on: 'c.id = r_c.category_id'
 }];
 
 function RecipeService() { }
@@ -115,22 +107,31 @@ RecipeService.prototype.getRecipes = async function (userId) {
     });
 
     if (!recipes.length) return;
-    
-    return recipes.map(recipe => ({
-        ...recipe,
-        prep: JSON.parse(recipe.prep),
-        cook: JSON.parse(recipe.cook),
-        ingredients: JSON.parse(recipe.ingredients),
-        instructions: recipe.instructions.split("|"),
-        comments: recipe.comments && recipe.comments.split("|"),
-        favorite: recipe.favorite ? true : false,
-        photo: JSON.parse(recipe.photo).data,
-        //Because there is no support for JSON_ARRAYAGG(DISTINCT exp), we must remove duplicates
-        categories: JSON.parse(recipe.categories).reduce((prev, curr, index, array) => {
-            if(!prev.find((val => val.name === curr.name))) return [...prev, curr];
-            return [...prev];
-        }, [])
-    }))
+
+    const recipePromises = recipes.map(async recipe => {
+        const categories = await RecipeCategory.getEntries({
+            rows: { 'recipe_category.recipe_id': recipe.id },
+            columns: ['c.name', 'c.type'],
+            joins: [{
+                table: `${Category.tableName} c`,
+                on: `c.id = recipe_category.category_id`
+            }]
+        });
+
+        return {
+            ...recipe,
+            prep: JSON.parse(recipe.prep),
+            cook: JSON.parse(recipe.cook),
+            ingredients: JSON.parse(recipe.ingredients),
+            instructions: recipe.instructions.split("|"),
+            comments: recipe.comments && recipe.comments.split("|"),
+            favorite: recipe.favorite ? true : false,
+            photo: JSON.parse(recipe.photo).data,
+            categories: categories
+        }
+    });
+
+    return Promise.all(recipePromises);
 }
 
 RecipeService.prototype.getRecipe = async function (recipeId, userId) {
@@ -142,6 +143,15 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 
     if (!recipe.id) return;
 
+    const categories = await RecipeCategory.getEntries({
+        rows: { 'recipe_category.recipe_id': recipeId },
+        columns: ['c.name', 'c.type'],
+        joins: [{
+            table: `${Category.tableName} c`,
+            on: `c.id = recipe_category.category_id`
+        }]
+    });
+
     return {
         ...recipe,
         prep: JSON.parse(recipe.prep),
@@ -151,11 +161,7 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
         comments: recipe.comments && recipe.comments.split("|"),
         favorite: recipe.favorite ? true : false,
         photo: JSON.parse(recipe.photo).data,
-        //Because there is no support for JSON_ARRAYAGG(DISTINCT exp), we must remove duplicates
-        categories: JSON.parse(recipe.categories).reduce((prev, curr) => {
-            if(!prev.find((val => val.name === curr.name))) return [...prev, curr];
-            return [...prev];
-        }, [])
+        categories: categories
     }
 }
 
