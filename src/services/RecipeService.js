@@ -111,7 +111,7 @@ RecipeService.prototype.getRecipes = async function (userId) {
     const recipePromises = recipes.map(async recipe => {
         const categories = await RecipeCategory.getEntries({
             rows: { 'recipe_category.recipe_id': recipe.id },
-            columns: ['c.name', 'c.type'],
+            columns: ['c.id', 'c.name', 'c.type'],
             joins: [{
                 table: `${Category.tableName} c`,
                 on: `c.id = recipe_category.category_id`
@@ -145,7 +145,7 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 
     const categories = await RecipeCategory.getEntries({
         rows: { 'recipe_category.recipe_id': recipeId },
-        columns: ['c.name', 'c.type'],
+        columns: ['c.id', 'c.name', 'c.type'],
         joins: [{
             table: `${Category.tableName} c`,
             on: `c.id = recipe_category.category_id`
@@ -182,7 +182,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
     for (let ingredientName in ingredients) {
         const ingredient = await Ingredient.getEntry({ rows: { name: ingredientName } });
         const isRemoving = ingredients[ingredientName] === null;
-        
+
         if(!ingredient && isRemoving) continue;
         
         const ingredientId = ingredient ? ingredient.id : await Ingredient.addEntry({ name: ingredientName }).then(entry => entry.insertId);
