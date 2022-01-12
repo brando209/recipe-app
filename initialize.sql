@@ -58,7 +58,7 @@ CREATE TABLE recipe_category(
 
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
-)
+);
 
 CREATE TABLE photos(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
