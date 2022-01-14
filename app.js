@@ -9,6 +9,7 @@ if(process.env.NODE_ENV !== "production") {
 
 const recipeRouter = require('./src/routes/recipes');
 const ingredientRouter = require('./src/routes/ingredients');
+const categoryRouter = require('./src/routes/categories');
 const authRouter = require('./src/routes/authentication');
 const userRouter = require('./src/routes/users');
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/api/recipes', recipeRouter);
 app.use('/api/ingredients', ingredientRouter);
+app.use('/api/categories', categoryRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
 

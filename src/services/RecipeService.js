@@ -2,7 +2,9 @@ const Table = require('../database/Table');
 
 const Recipe = new Table('recipes');
 const Ingredient = new Table('ingredients');
-const RecipeIngredient = new Table('recipe_ingredient')
+const Category = new Table('categories');
+const RecipeIngredient = new Table('recipe_ingredient');
+const RecipeCategory = new Table('recipe_category');
 const UserRecipe = new Table('user_recipe');
 const Photo = new Table('photos');
 
@@ -22,10 +24,10 @@ const joinsArray = [{
     on: 'i.id = ri.ingredient_id'
 }, {
     table: `${UserRecipe.tableName} u_r`,
-    on: `u_r.recipe_id = recipes.id`
+    on: 'u_r.recipe_id = recipes.id'
 }, {
     table: `${Photo.tableName} p`,
-    on: `p.recipeId = recipes.id`,
+    on: 'p.recipeId = recipes.id',
     type: 'LEFT'
 }];
 
@@ -54,8 +56,9 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
     //Add entry to user_recipe table which relates this recipe to the user who created it
     await UserRecipe.addEntry({ user_id: creatorId, recipe_id: newRecipe.insertId });
 
-    //Add entries into the ingredients table as well as the recipe_ingredient table
+    //Add ingredients
     for (let ingredient of recipeInfo.ingredients) {
+        //Add entries into the ingredients table, if not present
         const ingredientExists = await Ingredient.hasEntry({ name: ingredient.name });
 
         const ingredientId = ingredientExists ?
@@ -66,12 +69,29 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
         const ingredientMeasurement = (ingredient.measurement && ingredient.measurement !== "") ? ingredient.measurement : null;
         const ingredientSize = (ingredient.size && ingredient.size !== "") ? ingredient.size : null;
 
+        //Add entry into recipe_ingredient table which relates this ingedient to the recipe
         await RecipeIngredient.addEntry({
             recipe_id: newRecipe.insertId,
             ingredient_id: ingredientId,
             amount: ingredientAmount,
             measurement: ingredientMeasurement,
             size: ingredientSize,
+        });
+    }
+
+    //Add categories
+    for(let category of recipeInfo.categories) {
+        //Add entries into the categories table, if not present
+        const categoryExists = await Category.hasEntry({ name: category.name });
+
+        const categoryId = categoryExists ? 
+            await Category.getEntry({ rows: { name: category.name } }).then(entry => entry.id) :
+            await Category.addEntry({ name: category.name }).then(entry => entry.insertId);
+
+        //Add entry into recipe_category table which relates this category to the recipe
+        await RecipeCategory.addEntry({
+            recipe_id: newRecipe.insertId,
+            category_id: categoryId
         });
     }
 
@@ -87,17 +107,31 @@ RecipeService.prototype.getRecipes = async function (userId) {
     });
 
     if (!recipes.length) return;
-    
-    return recipes.map(recipe => ({
-        ...recipe,
-        prep: JSON.parse(recipe.prep),
-        cook: JSON.parse(recipe.cook),
-        ingredients: JSON.parse(recipe.ingredients),
-        instructions: recipe.instructions.split("|"),
-        comments: recipe.comments && recipe.comments.split("|"),
-        favorite: recipe.favorite ? true : false,
-        photo: JSON.parse(recipe.photo).data
-    }))
+
+    const recipePromises = recipes.map(async recipe => {
+        const categories = await RecipeCategory.getEntries({
+            rows: { 'recipe_category.recipe_id': recipe.id },
+            columns: ['c.id', 'c.name', 'c.type'],
+            joins: [{
+                table: `${Category.tableName} c`,
+                on: `c.id = recipe_category.category_id`
+            }]
+        });
+
+        return {
+            ...recipe,
+            prep: JSON.parse(recipe.prep),
+            cook: JSON.parse(recipe.cook),
+            ingredients: JSON.parse(recipe.ingredients),
+            instructions: recipe.instructions.split("|"),
+            comments: recipe.comments && recipe.comments.split("|"),
+            favorite: recipe.favorite ? true : false,
+            photo: JSON.parse(recipe.photo).data,
+            categories: categories
+        }
+    });
+
+    return Promise.all(recipePromises);
 }
 
 RecipeService.prototype.getRecipe = async function (recipeId, userId) {
@@ -109,6 +143,15 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 
     if (!recipe.id) return;
 
+    const categories = await RecipeCategory.getEntries({
+        rows: { 'recipe_category.recipe_id': recipeId },
+        columns: ['c.id', 'c.name', 'c.type'],
+        joins: [{
+            table: `${Category.tableName} c`,
+            on: `c.id = recipe_category.category_id`
+        }]
+    });
+
     return {
         ...recipe,
         prep: JSON.parse(recipe.prep),
@@ -117,12 +160,13 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
         instructions: recipe.instructions.split("|"),
         comments: recipe.comments && recipe.comments.split("|"),
         favorite: recipe.favorite ? true : false,
-        photo: JSON.parse(recipe.photo).data
+        photo: JSON.parse(recipe.photo).data,
+        categories: categories
     }
 }
 
 RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId) {
-    const { title, description, instructions, comments, serves, prep, cook, ingredients, favorite } = updates;
+    const { title, description, instructions, comments, categories, serves, prep, cook, ingredients, favorite } = updates;
     const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
     
     //Update recipe information
@@ -138,12 +182,12 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
     for (let ingredientName in ingredients) {
         const ingredient = await Ingredient.getEntry({ rows: { name: ingredientName } });
         const isRemoving = ingredients[ingredientName] === null;
-        
+
         if(!ingredient && isRemoving) continue;
         
         const ingredientId = ingredient ? ingredient.id : await Ingredient.addEntry({ name: ingredientName }).then(entry => entry.insertId);
         
-        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredient?.id } });
+        const existsInRecipe = await RecipeIngredient.getEntry({ rows: { recipe_id: recipeId, ingredient_id: ingredientId } });
 
         if(existsInRecipe && isRemoving) {
             await RecipeIngredient.removeEntries({ recipe_id: recipeId, ingredient_id: ingredientId });
@@ -171,6 +215,30 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
             measurement: ingredientMeasurement,
             size: ingredientSize,
         })
+    }
+
+    //Update category information
+    for(let categoryName in categories) {
+        const category = await Category.getEntry({ rows: { name: categoryName } });
+        const isRemoving = categories[categoryName] === null;
+
+        if(!category && isRemoving) continue;
+
+        const categoryId = category ? category.id : await Category.addEntry({ 
+            name: categoryName, 
+            type: categories[categoryName].type ? categories[categoryName].type : 'other'
+        }).then(entry => entry.insertId);
+
+        const existsInRecipe = await RecipeCategory.getEntry({ rows: { recipe_id: recipeId, category_id: categoryId } });
+
+        if(existsInRecipe && isRemoving) {
+            await RecipeCategory.removeEntries({ recipe_id: recipeId, category_id: categoryId });
+            continue;
+        }
+
+        if(!existsInRecipe) {
+            await RecipeCategory.addEntry({ recipe_id: recipeId, category_id: categoryId });
+        }
     }
 
     //Update favorited recipe

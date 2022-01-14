@@ -18,6 +18,7 @@ const validateRecipe = (req, res, next) => {
     body.instructions = JSON.parse(body.instructions);
     body.ingredients = JSON.parse(body.ingredients);
     body.comments = (body.comments && JSON.parse(body.comments)) || null;
+    body.categories = (body.categories && JSON.parse(body.categories)) || null;
     req.body = body;
 
     validator(body, validationRule, {}, (err, success) => {
