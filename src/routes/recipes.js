@@ -11,40 +11,17 @@ const { validateRecipe } = require('../middlewares/validation');
 const { authorizeJWT, authorizeUser } = require('../middlewares/authorization');
 const upload = require('../middlewares/upload');
 
+const { formatRecipe } = require('../utils/format');
+
 const extractRecipeInfo = (compactedJsonld) => {
     if(compactedJsonld.type === "Recipe") {
-        return {
-            title: compactedJsonld.name,
-            description: compactedJsonld.description,
-            image: compactedJsonld.image,
-            category: compactedJsonld.recipeCategory,
-            cuisine: compactedJsonld.recipeCuisine,
-            ingredients: compactedJsonld.recipeIngredient,
-            instructions: compactedJsonld.recipeInstructions,
-            cookTime: compactedJsonld.cookTime,
-            prepTime: compactedJsonld.prepTime,
-            totalTime: compactedJsonld.totalTime,
-            serves: compactedJsonld.recipeYield
-        }
+        return formatRecipe(compactedJsonld);
     }
 
     const graph = compactedJsonld['@graph'];
     const recipeNode = graph.filter(node => node.type === "Recipe")[0];
 
-    return {
-        title: recipeNode.name,
-        description: recipeNode.description,
-        image: recipeNode.image,
-        category: recipeNode.recipeCategory,
-        cuisine: recipeNode.recipeCuisine,
-        ingredients: recipeNode.recipeIngredient,
-        instructions: recipeNode.recipeInstructions,
-        cookTime: recipeNode.cookTime,
-        prepTime: recipeNode.prepTime,
-        totalTime: recipeNode.totalTime,
-        serves: recipeNode.recipeYield
-    }
-    
+    return formatRecipe(recipeNode);
 }
 
 router.use(authorizeJWT);
