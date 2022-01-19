@@ -9,7 +9,7 @@ CREATE TABLE users(
 
 CREATE TABLE recipes(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(32) NOT NULL,
+    title VARCHAR(96) NOT NULL,
     instructions TEXT NOT NULL,
     description TEXT,
     serves INT NOT NULL,
@@ -31,7 +31,7 @@ CREATE TABLE user_recipe(
 
 CREATE TABLE ingredients(
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-    name VARCHAR(32) NOT NULL
+    name VARCHAR(96) NOT NULL
 );
 
 CREATE TABLE recipe_ingredient(
@@ -41,6 +41,7 @@ CREATE TABLE recipe_ingredient(
     amount DECIMAL(5,3),
     measurement ENUM('teaspoon', 'tablespoon', 'cup', 'ounce', 'pound', 'gram'),
     size ENUM('small', 'medium', 'large'),
+    comment VARCHAR(255) DEFAULT NULL,
 
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
     FOREIGN KEY (ingredient_id) REFERENCES ingredients(id) ON DELETE CASCADE

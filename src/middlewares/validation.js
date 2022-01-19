@@ -2,7 +2,7 @@ const validator = require('../helpers/validator');
 
 const validateRecipe = (req, res, next) => {
     const validationRule = {
-        "title":                        "required|string|min:3|max:30",
+        "title":                        "required|string|min:3|max:96",
         "description":                  "string|min:3|max:512",
         "instructions":                 "required|array",
         "ingredients":                  "required|array",
