@@ -11,4 +11,8 @@ const convertUnicodeFraction = (string) => {
     return string;
 }
 
-module.exports = { convertUnicodeFraction }
+const cleanString = (string) => {
+    return string.replace(/&nbsp;/g, ' '); //TODO: Consider other HTML Entities
+} 
+
+module.exports = { convertUnicodeFraction, cleanString }

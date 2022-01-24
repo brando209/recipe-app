@@ -1,4 +1,5 @@
 const express = require('express');
+const fs = require('fs');
 const fetch = require('node-fetch');
 const htmlParser = require('node-html-parser');
 const jsonld = require('jsonld');
@@ -9,20 +10,9 @@ const service = new RecipeService();
 
 const { validateRecipe } = require('../middlewares/validation');
 const { authorizeJWT, authorizeUser } = require('../middlewares/authorization');
-const upload = require('../middlewares/upload');
+const { upload, uniqueFilename } = require('../middlewares/upload');
 
 const { formatRecipe } = require('../utils/format');
-
-const extractRecipeInfo = (compactedJsonld) => {
-    if(compactedJsonld.type === "Recipe") {
-        return formatRecipe(compactedJsonld);
-    }
-
-    const graph = compactedJsonld['@graph'];
-    const recipeNode = graph.filter(node => node.type === "Recipe")[0];
-
-    return formatRecipe(recipeNode);
-}
 
 router.use(authorizeJWT);
 
@@ -31,14 +21,36 @@ router.get('/', async (req, res) => {
     return res.send(recipes);
 });
 
+const extractRecipeJsonld = async (root) => {
+    const jsonldNodes = root.querySelectorAll('script[type="application/ld+json"]');
+
+    let recipeNode = null;
+    for(let node of jsonldNodes) {
+        const jsonldData = JSON.parse(node.innerText);
+        const compacted = await jsonld.compact(jsonldData, 'https://schema.org/');
+
+        if(compacted.type === "Recipe") {
+            recipeNode = compacted;
+            break;
+        }
+
+        if(compacted["@graph"]) {
+            recipeNode = compacted["@graph"].find(subnode => subnode.type === "Recipe");
+            if(recipeNode) break;
+        }
+    }
+
+    return recipeNode;
+}
+
 router.get('/import', async (req, res) => {
     console.log("Attempting to import recipe from:", req.query.importUrl);
     const html = await fetch(req.query.importUrl).then(response => response.text());
     const root = htmlParser.parse(html);
-    const recipeJsonld = JSON.parse(root.querySelector('script[type="application/ld+json"]').innerText)
-    const compacted = await jsonld.compact(recipeJsonld, 'https://schema.org/');
+    
+    const recipeJsonld = await extractRecipeJsonld(root);
 
-    const recipeInfo = extractRecipeInfo(compacted);
+    const recipeInfo = formatRecipe(recipeJsonld);
 
     res.json(recipeInfo);
 });
@@ -54,10 +66,22 @@ router.post('/', upload.single('photo'), validateRecipe, async (req, res) => {
     const recipeInfo = req.body;
 
     if (req.file) {
-        //Remove 'public/' from path when storing in db
+        //A File object was recieved
         recipeInfo.photo = {
+            //Remove 'public/' from path when storing in db
             path: req.file.path.substring(req.file.path.indexOf('/') + 1),
             mimetype: req.file.mimetype
+        }
+    } else if(recipeInfo.photo?.length > 0) {
+        //Assume a url to a photo was recieved
+        const imageExtRegex = /\.(gif|jpe?g|tiff?|png|webp|bmp)$/i;
+        const extension = recipeInfo.photo.match(imageExtRegex);
+        const pathname = 'uploads/' + uniqueFilename();
+        //Fetch the photo and save it to filesystem
+        await fetch(recipeInfo.photo).then(res => res.body.pipe(fs.createWriteStream(`public/${pathname}`)));
+        recipeInfo.photo = {
+            path: pathname,
+            mimetype: `image/${extension[1] === "jpg" ? 'jpeg' : extension[1]}`
         }
     } else delete recipeInfo.photo;
 

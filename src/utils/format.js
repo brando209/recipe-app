@@ -2,7 +2,7 @@ const recipeIngredientParser = require('ingredients-parser');
 const iso8601Duration = require('iso8601-duration');
 const { unitsMap } = require('../utils/units');
 const { toDecimal } = require('../utils/numbers');
-const { convertUnicodeFraction } = require('../utils/strings');
+const { convertUnicodeFraction, cleanString } = require('../utils/strings');
 
 const formatCategories = (cuisines, others) => {
     const categories = [];
@@ -31,6 +31,7 @@ const formatIngredients = (ingredients) => {
         
         //Assumes opening parens begins the comment/prepared info section.
         // ex. '8 ounces flat rice noodles (carefully separated)'
+        //TODO: Sometimes opening parens is a converted measurement, ex: 6g (1 tsp) coarse kosher salt
         const nameEnd = name.indexOf("(");
 
         formatted.push({
@@ -46,9 +47,28 @@ const formatIngredients = (ingredients) => {
 
 const formatInstructions = (instructions) => {
     const formatted = [];
-    for(let instruction of instructions) {
-        formatted.push(instruction.text.replace(/&nbsp;/g, ' ')); //TODO: Consider other HTML Entities
+    let i = 0;
+
+    //Sometimes instructions will be divided into sections, ex. Chicken wings & Buffalo sauce
+    //If these exists we will have a 2-D array for our instructions where the first entry of each
+    //inner array is the name of the section and the rest of the entries are the instructions for that section
+    if(instructions[0].type === "HowToSection") {
+        for(let section of instructions) {
+            // const sectionInstructions = [section.name];
+            for(let instruction of section.itemListElement) {
+                formatted.push(cleanString(instruction.text)); 
+            }
+            // formatted.push(sectionInstructions);
+        }
     }
+
+    //If there are no sections, we have a single array for our instructions
+    if(instructions[0].type === "HowToStep") {
+        for(let instruction of instructions) {
+            formatted.push(cleanString(instruction.text));
+        }
+    }
+
     return formatted;
 }
 
@@ -76,7 +96,7 @@ const formatServings = (servings) => {
 
 const formatPhoto = (photos) => {
     if(Array.isArray(photos)) return photos[0];
-    else if(photos.url) return photos.url;
+    else if(photos?.url) return photos.url;
     else return photos;
 }
 
@@ -90,7 +110,8 @@ const formatRecipe = (recipeInfo) => {
         instructions: formatInstructions(recipeInfo.recipeInstructions),
         cook: formatTime(recipeInfo.cookTime),
         prep: formatTime(recipeInfo.prepTime),
-        serves: formatServings(recipeInfo.recipeYield)
+        serves: formatServings(recipeInfo.recipeYield),
+        comments: []
     }
 }
 
