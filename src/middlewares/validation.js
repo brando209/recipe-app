@@ -7,7 +7,7 @@ const validateRecipe = (req, res, next) => {
         "instructions":                 "required|array",
         "ingredients":                  "required|array",
         "ingredients.*.amount":         "numeric",
-        "ingredients.*.measurement":    "in:teaspoon,tablespoon,cup,ounce,pound,gram",
+        "ingredients.*.measurement":    "in:teaspoon,tablespoon,cup,ounce,pound,milligram,gram,kilogram,milliliter,liter,pint,quart,gallon,pinch,piece,slice,stick,clove,can,box,bag,package",
         "ingredients.*.size":           "in:small,medium,large",
         "comments":                     "array"
     }
