@@ -2,7 +2,6 @@ const express = require('express');
 const fs = require('fs');
 const fetch = require('node-fetch');
 const htmlParser = require('node-html-parser');
-const jsonld = require('jsonld');
 const router = express.Router();
 
 const RecipeService = require('../services/RecipeService');
@@ -13,6 +12,7 @@ const { authorizeJWT, authorizeUser } = require('../middlewares/authorization');
 const { upload, uniqueFilename } = require('../middlewares/upload');
 
 const { formatRecipe } = require('../utils/format');
+const { extractRecipeJsonld } = require('../utils/jsonld');
 
 router.use(authorizeJWT);
 
@@ -20,28 +20,6 @@ router.get('/', async (req, res) => {
     const recipes = await service.getRecipes(req.user.id);
     return res.send(recipes);
 });
-
-const extractRecipeJsonld = async (root) => {
-    const jsonldNodes = root.querySelectorAll('script[type="application/ld+json"]');
-
-    let recipeNode = null;
-    for(let node of jsonldNodes) {
-        const jsonldData = JSON.parse(node.innerText);
-        const compacted = await jsonld.compact(jsonldData, 'https://schema.org/');
-
-        if(compacted.type === "Recipe") {
-            recipeNode = compacted;
-            break;
-        }
-
-        if(compacted["@graph"]) {
-            recipeNode = compacted["@graph"].find(subnode => subnode.type === "Recipe");
-            if(recipeNode) break;
-        }
-    }
-
-    return recipeNode;
-}
 
 router.get('/import', async (req, res) => {
     console.log("Attempting to import recipe from:", req.query.importUrl);
