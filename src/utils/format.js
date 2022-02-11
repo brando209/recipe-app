@@ -1,8 +1,6 @@
-const recipeIngredientParser = require('ingredients-parser');
+const recipeIngredientParser = require('ingredientparserjs');
 const iso8601Duration = require('iso8601-duration');
-const { unitsMap } = require('../utils/units');
-const { toDecimal } = require('../utils/numbers');
-const { convertUnicodeFraction, cleanString } = require('../utils/strings');
+const { cleanString } = require('../utils/strings');
 
 const formatCategories = (cuisines, others) => {
     const categories = [];
@@ -25,20 +23,13 @@ const formatCategories = (cuisines, others) => {
 const formatIngredients = (ingredients) => {
     const formatted = [];
     for(let ingredient of ingredients) {
-        ingredient = convertUnicodeFraction(ingredient);
-
-        const { ingredient: name, amount, unit } = recipeIngredientParser.parse(ingredient);
+        const { name, measurement: { quantity, unit } } = recipeIngredientParser.parse(ingredient);
         
-        //Assumes opening parens begins the comment/prepared info section.
-        // ex. '8 ounces flat rice noodles (carefully separated)'
-        //TODO: Sometimes opening parens is a converted measurement, ex: 6g (1 tsp) coarse kosher salt
-        const nameEnd = name.indexOf("(");
-
         formatted.push({
-            name: nameEnd === -1 ? name : name.substring(0, nameEnd),
-            amount: toDecimal(amount),
-            measurement: unitsMap.get(unit),
-            comment: nameEnd === -1 ? null : name.substring(nameEnd)
+            name: name,
+            amount: quantity,
+            measurement: unit,
+            comment: ""
         })
     }
 
