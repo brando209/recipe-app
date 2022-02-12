@@ -24,11 +24,12 @@ const formatIngredients = (ingredients) => {
     const formatted = [];
     for(let ingredient of ingredients) {
         const { name, measurement: { quantity, unit } } = recipeIngredientParser.parse(ingredient);
-        
+        const unitIsSize = ['small', 'medium', 'large'].includes(unit);
         formatted.push({
             name: name,
             amount: quantity,
-            measurement: unit,
+            measurement: unitIsSize ? null : unit,
+            size: unitIsSize ? unit : null,
             comment: ""
         })
     }
