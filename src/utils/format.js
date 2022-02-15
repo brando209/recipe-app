@@ -27,8 +27,8 @@ const formatIngredients = (ingredients) => {
         const unitIsSize = ['small', 'medium', 'large'].includes(unit);
         formatted.push({
             name: name,
-            amount: quantity,
-            measurement: unitIsSize ? null : unit,
+            quantity: quantity,
+            unit: unitIsSize ? null : unit,
             size: unitIsSize ? unit : null,
             comment: ""
         })

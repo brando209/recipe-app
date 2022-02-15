@@ -38,14 +38,14 @@ CREATE TABLE recipe_ingredient(
     recipe_id INT NOT NULL,
     ingredient_id INT NOT NULL,
 
-    amount DECIMAL(5,3),
-    measurement ENUM(
+    quantity DECIMAL(5,3),
+    unit ENUM(
         'teaspoon', 'tablespoon', 'cup',
         'ounce', 'pound', 'milligram', 'gram', 'kilogram',
         'liter', 'milliliter', 'quart', 'pint', 'gallon',
         'pinch', 'piece',
         'slice', 'stick', 'clove',
-        'can', 'box', 'bag', 'package'
+        'can', 'box', 'bag', 'package', 'bunch'
     ),
     size ENUM('small', 'medium', 'large'),
     comment VARCHAR(255) DEFAULT NULL,

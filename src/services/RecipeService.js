@@ -13,7 +13,7 @@ const columnsArray = [
     'JSON_OBJECTAGG("data", JSON_OBJECT("path", p.path, "mimetype", p.mimetype)) as photo',
     'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
     'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
-    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "amount", ri.amount, "measurement", ri.measurement, "size", ri.size)) as ingredients'
+    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "quantity", ri.quantity, "unit", ri.unit, "size", ri.size)) as ingredients'
 ];
 
 const joinsArray = [{
@@ -65,16 +65,16 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
             await Ingredient.getEntry({ rows: { name: ingredient.name } }).then(entry => entry.id) :
             await Ingredient.addEntry({ name: ingredient.name }).then(entry => entry.insertId);
 
-        const ingredientAmount = (ingredient.amount && ingredient.amount !== "") ? ingredient.amount : null;
-        const ingredientMeasurement = (ingredient.measurement && ingredient.measurement !== "") ? ingredient.measurement : null;
+        const ingredientQuantity = (ingredient.quantity && ingredient.quantity !== "") ? ingredient.quantity : null;
+        const ingredientUnit = (ingredient.unit && ingredient.unit !== "") ? ingredient.unit : null;
         const ingredientSize = (ingredient.size && ingredient.size !== "") ? ingredient.size : null;
 
         //Add entry into recipe_ingredient table which relates this ingedient to the recipe
         await RecipeIngredient.addEntry({
             recipe_id: newRecipe.insertId,
             ingredient_id: ingredientId,
-            amount: ingredientAmount,
-            measurement: ingredientMeasurement,
+            quantity: ingredientQuantity,
+            unit: ingredientUnit,
             size: ingredientSize,
         });
     }
@@ -196,14 +196,14 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
 
         if(!existsInRecipe && isRemoving) continue;
 
-        const ingredientAmount = (ingredients[ingredientName]?.amount !== "") ? ingredients[ingredientName]?.amount : null;
-        const ingredientMeasurement = (ingredients[ingredientName]?.measurement !== "") ? ingredients[ingredientName]?.measurement : null;
+        const ingredientQuantity = (ingredients[ingredientName]?.quantity !== "") ? ingredients[ingredientName]?.quantity : null;
+        const ingredientUnit = (ingredients[ingredientName]?.unit !== "") ? ingredients[ingredientName]?.unit : null;
         const ingredientSize = (ingredients[ingredientName]?.size !== "") ? ingredients[ingredientName]?.size : null;
         
         if(existsInRecipe) {
             await RecipeIngredient.updateEntries(
                 { recipe_id: recipeId, ingredient_id: ingredientId },
-                { amount: ingredientAmount, measurement: ingredientMeasurement, size: ingredientSize }
+                { quantity: ingredientQuantity, unit: ingredientUnit, size: ingredientSize }
             );
             continue;
         }
@@ -211,8 +211,8 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
         await RecipeIngredient.addEntry({
             recipe_id: recipeId,
             ingredient_id: ingredientId,
-            amount: ingredientAmount,
-            measurement: ingredientMeasurement,
+            quantity: ingredientQuantity,
+            unit: ingredientUnit,
             size: ingredientSize,
         })
     }
