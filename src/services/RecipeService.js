@@ -173,7 +173,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
     isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, {
         title, description, serves,
         instructions: instructions?.join("|"),
-        comments: comments?.join("|"),
+        comments: comments ?? comments?.join("|"),
         prepTime: prep?.time, prepUnit: prep?.unit,
         cookTime: cook?.time, cookUnit: cook?.unit,
     });
