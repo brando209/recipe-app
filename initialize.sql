@@ -76,3 +76,38 @@ CREATE TABLE photos(
 
     FOREIGN KEY (recipeId) REFERENCES recipes(id) ON DELETE CASCADE 
 );
+
+CREATE TABLE lists(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE list_item(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    list_id INT NOT NULL,
+
+    name VARCHAR(255) NOT NULL,
+    complete TINYINT NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE meal_plans(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE meal_plan_item(
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    plan_id INT NOT NULL,
+
+    recipe_id INT NOT NULL,
+    date DATETIME NOT NULL,
+
+    FOREIGN KEY (plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);

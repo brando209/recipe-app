@@ -12,6 +12,7 @@ const ingredientRouter = require('./src/routes/ingredients');
 const categoryRouter = require('./src/routes/categories');
 const authRouter = require('./src/routes/authentication');
 const userRouter = require('./src/routes/users');
+const plannerRouter = require('./src/routes/planner');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/ingredients', ingredientRouter);
 app.use('/api/categories', categoryRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/user', userRouter);
+app.use('/api/planner', plannerRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
