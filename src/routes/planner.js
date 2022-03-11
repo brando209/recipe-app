@@ -18,14 +18,13 @@ router.post('/meal', async (req, res) => {
     res.json(plannedMeal);
 });
 
-router.patch('/meal', async (req, res) => {
-    const { mealPlanItemId, mealPlanItemUpdate } = req.body;
-    const updatedMeal = await service.updateMealPlanItem(mealPlanItemId, mealPlanItemUpdate);
+router.patch('/meal/:mealId', async (req, res) => {
+    const updatedMeal = await service.updateMealPlanItem(req.params.mealId, req.body);
     res.send("Success");
 });
 
-router.delete('/meal', async (req, res) => {
-    const deletedMeal = await service.deleteMealPlanItem(req.body.mealPlanItemId);
+router.delete('/meal/:mealId', async (req, res) => {
+    const deletedMeal = await service.deleteMealPlanItem(req.params.mealId);
     res.send("Success");
 });
 
@@ -39,14 +38,13 @@ router.post('/grocery', async (req, res) => {
     res.json(listItem);
 });
 
-router.patch('/grocery', async (req, res) => {
-    const { listItemId, listItemUpdate } = req.body;
-    const updatedlistItem = await service.updateGroceryListItem(listItemId, listItemUpdate);
+router.patch('/grocery/:itemId', async (req, res) => {
+    const updatedlistItem = await service.updateGroceryListItem(req.params.itemId, req.body);
     res.send("Success");
 });
 
-router.delete('/grocery', async (req, res) => {
-    const deletedListItem = await service.deleteGroceryListItem(req.body.listItemId);
+router.delete('/grocery/:itemId', async (req, res) => {
+    const deletedListItem = await service.deleteGroceryListItem(req.params.itemId);
     res.send("Success");
 });
 
