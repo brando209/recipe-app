@@ -5,6 +5,8 @@ const MealPlanItem = new Table('meal_plan_item');
 const GroceryList = new Table('lists');
 const GroceryListItem = new Table('list_item');
 
+const toSQLDatetime = (date) => new Date(date).toISOString().slice(0, 19).replace('T', ' ');
+
 function PlannerService() { }
 
 //TODO: DRY code between meal plan and grocery list... seems the same
@@ -22,13 +24,14 @@ PlannerService.prototype.addMealPlanItem = async function(userId, mealPlanItem) 
         await MealPlan.getEntry({ row: { user_id: userId }}).then(entry => entry.id) :
         await MealPlan.addEntry({ user_id: userId }).then(entry => entry.insertId);
     
-        mealPlanItem = { plan_id: mealPlanId, recipe_id: mealPlanItem.recipeId, date: new Date(mealPlanItem.date).toISOString().slice(0, 19).replace('T', ' ') }
-
+    mealPlanItem = { plan_id: mealPlanId, recipe_id: mealPlanItem.recipeId, date: toSQLDatetime(mealPlanItem.date) }
     const addedItemId = await MealPlanItem.addEntry(mealPlanItem).then(entry => entry.insertId);
     return MealPlanItem.getEntry({rows: { id: addedItemId }, columns: ['id', 'recipe_id as recipeId', 'date'] });
 }
 
 PlannerService.prototype.updateMealPlanItem = async function(mealPlanItemId, updates) {
+    if(updates.date) updates.date = toSQLDatetime(updates.date);
+
     const updatedItem = await MealPlanItem.updateEntries({ id: mealPlanItemId }, updates);
     return updatedItem;
 }
