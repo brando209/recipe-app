@@ -10,6 +10,12 @@ object-assign
   http://jedwatson.github.io/classnames
 */
 
+/*!
+ * calendar.js: inspired by the calendar module from Python
+ * Copyright(c) 2011 Luciano Ramalho <luciano@ramalho.org>
+ * MIT Licensed
+ */
+
 /**
  * React Router DOM v6.0.2
  *
