@@ -36,9 +36,10 @@ function RecipeService() { }
 RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
     //Add an entry in the recipe table
     const newRecipe = await Recipe.addEntry({
-        title: recipeInfo.title,
+        title: recipeInfo.title.trim(),
         instructions: recipeInfo.instructions.join("|"),
-        description: recipeInfo.description || null,
+        description: recipeInfo.description?.trim() || null,
+        //TODO: Store prep and cook times as iso8601 duration
         prepTime: recipeInfo.prep.time || 0,
         prepUnit: recipeInfo.prep.unit,
         cookTime: recipeInfo.cook.time || 0,
@@ -48,9 +49,8 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
     });
 
     //Add entry to files table if photo is present
-    let file = null;
     if(recipeInfo.photo) {
-        file = await Photo.addEntry({ ...recipeInfo.photo, recipeId: newRecipe.insertId });
+        await Photo.addEntry({ ...recipeInfo.photo, recipeId: newRecipe.insertId });
     }
 
     //Add entry to user_recipe table which relates this recipe to the user who created it
@@ -58,12 +58,13 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
 
     //Add ingredients
     for (let ingredient of recipeInfo.ingredients) {
+        const ingredientName = ingredient.name.trim().toLowerCase();
         //Add entries into the ingredients table, if not present
-        const ingredientExists = await Ingredient.hasEntry({ name: ingredient.name });
+        const ingredientExists = await Ingredient.hasEntry({ name: ingredientName });
 
         const ingredientId = ingredientExists ?
-            await Ingredient.getEntry({ rows: { name: ingredient.name } }).then(entry => entry.id) :
-            await Ingredient.addEntry({ name: ingredient.name }).then(entry => entry.insertId);
+            await Ingredient.getEntry({ rows: { name: ingredientName } }).then(entry => entry.id) :
+            await Ingredient.addEntry({ name: ingredientName }).then(entry => entry.insertId);
 
         const ingredientQuantity = (ingredient.quantity && ingredient.quantity !== "") ? ingredient.quantity : null;
         const ingredientUnit = (ingredient.unit && ingredient.unit !== "") ? ingredient.unit : null;
@@ -81,12 +82,13 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
 
     //Add categories
     for(let category of recipeInfo.categories) {
+        const categoryName = category.name.trim().toLowerCase();
         //Add entries into the categories table, if not present
-        const categoryExists = await Category.hasEntry({ name: category.name });
+        const categoryExists = await Category.hasEntry({ name: categoryName });
 
         const categoryId = categoryExists ? 
-            await Category.getEntry({ rows: { name: category.name } }).then(entry => entry.id) :
-            await Category.addEntry({ name: category.name }).then(entry => entry.insertId);
+            await Category.getEntry({ rows: { name: categoryName } }).then(entry => entry.id) :
+            await Category.addEntry({ name: categoryName, type: category.type }).then(entry => entry.insertId);
 
         //Add entry into recipe_category table which relates this category to the recipe
         await RecipeCategory.addEntry({
@@ -166,22 +168,32 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 }
 
 RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId) {
-    const { title, description, instructions, comments, categories, serves, prep, cook, ingredients, favorite } = updates;
+    const { title, description, instructions, comments, serves, prep, cook, categories, ingredients, favorite } = updates;
     const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
     
+    const update = {};
+    if(title) update.title = title.trim();
+    if(description) update.description = description.trim();
+    if(serves) update.serves = serves;
+    if(instructions) update.instructions = instructions.join("|");
+    if(comments) update.comments = comments.join("|");
+    if(prep) {
+        update.prepTime = prep.time;
+        update.prepUnit = prep.unit;
+    };
+    if(cook) {
+        update.cookTime = cook.time;
+        update.cookUnit = cook.unit;
+    };
+
     //Update recipe information
-    isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, {
-        title, description, serves,
-        instructions: instructions?.join("|"),
-        comments: comments ?? comments?.join("|"),
-        prepTime: prep?.time, prepUnit: prep?.unit,
-        cookTime: cook?.time, cookUnit: cook?.unit,
-    });
+    isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, update);
 
     //Update ingredient information
-    for (let ingredientName in ingredients) {
+    for (let name in ingredients) {
+        const ingredientName = name.trim();
         const ingredient = await Ingredient.getEntry({ rows: { name: ingredientName } });
-        const isRemoving = ingredients[ingredientName] === null;
+        const isRemoving = ingredients[name] === null;
 
         if(!ingredient && isRemoving) continue;
         
@@ -196,9 +208,9 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
 
         if(!existsInRecipe && isRemoving) continue;
 
-        const ingredientQuantity = (ingredients[ingredientName]?.quantity !== "") ? ingredients[ingredientName]?.quantity : null;
-        const ingredientUnit = (ingredients[ingredientName]?.unit !== "") ? ingredients[ingredientName]?.unit : null;
-        const ingredientSize = (ingredients[ingredientName]?.size !== "") ? ingredients[ingredientName]?.size : null;
+        const ingredientQuantity = (ingredients[name]?.quantity !== "") ? ingredients[name]?.quantity : null;
+        const ingredientUnit = (ingredients[name]?.unit !== "") ? ingredients[name]?.unit : null;
+        const ingredientSize = (ingredients[name]?.size !== "") ? ingredients[name]?.size : null;
         
         if(existsInRecipe) {
             await RecipeIngredient.updateEntries(
@@ -218,15 +230,16 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
     }
 
     //Update category information
-    for(let categoryName in categories) {
+    for(let name in categories) {
+        const categoryName = name.trim().toLowerCase();
         const category = await Category.getEntry({ rows: { name: categoryName } });
-        const isRemoving = categories[categoryName] === null;
+        const isRemoving = categories[name] === null;
 
         if(!category && isRemoving) continue;
 
         const categoryId = category ? category.id : await Category.addEntry({ 
             name: categoryName, 
-            type: categories[categoryName].type ? categories[categoryName].type : 'other'
+            type: categories[name].type ? categories[name].type : 'other'
         }).then(entry => entry.insertId);
 
         const existsInRecipe = await RecipeCategory.getEntry({ rows: { recipe_id: recipeId, category_id: categoryId } });
