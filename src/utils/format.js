@@ -66,6 +66,7 @@ const formatInstructions = (instructions) => {
 
 //Assues all times will be in either hours or minutes
 const formatTime = (time) => {
+    if(!time) return;
     const duration = iso8601Duration.parse(time);
     if(duration.hours > 0) {
         return {
@@ -102,6 +103,7 @@ const formatRecipe = (recipeInfo) => {
         instructions: formatInstructions(recipeInfo.recipeInstructions),
         cook: formatTime(recipeInfo.cookTime),
         prep: formatTime(recipeInfo.prepTime),
+        total: formatTime(recipeInfo.totalTime),
         serves: formatServings(recipeInfo.recipeYield),
         comments: []
     }
