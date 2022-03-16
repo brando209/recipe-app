@@ -46,7 +46,8 @@ PlannerService.prototype.getGroceryList = async function(userId) {
     if(!listExists) return;
 
     const listId = await GroceryList.getEntry({ rows: { 'user_id': userId } }).then(entry => entry.id);
-    return GroceryListItem.getEntries({ rows: { list_id: listId }, columns: ['id', 'name', 'complete'] });
+    const list = await GroceryListItem.getEntries({ rows: { list_id: listId }, columns: ['id', 'name', 'complete'] });
+    return list.map(item => ({...item, complete: item.complete ? true : false }));
 }
 
 PlannerService.prototype.addGroceryListItem = async function(userId, listItem) {
