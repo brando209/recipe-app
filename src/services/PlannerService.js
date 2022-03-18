@@ -5,7 +5,7 @@ const MealPlanItem = new Table('meal_plan_item');
 const GroceryList = new Table('lists');
 const GroceryListItem = new Table('list_item');
 
-const toSQLDatetime = (date) => new Date(date).toISOString().slice(0, 19).replace('T', ' ');
+const { toSQLDatetime } = require('../utils/sql');
 
 function PlannerService() { }
 
