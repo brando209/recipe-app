@@ -4,7 +4,15 @@ CREATE TABLE users(
     lastName VARCHAR(32) NOT NULL,
     userName VARCHAR(32) NOT NULL,
     email    VARCHAR(64) NOT NULL,
-    password VARCHAR(64) NOT NULL
+    password VARCHAR(64) NOT NULL,
+    type ENUM ('user', 'guest') DEFUALT 'user';
+);
+
+CREATE TABLE guests(
+    id INT NOT NULL,
+    loginAt DATETIME DEFAULT NULL,
+
+    FOREIGN KEY (id) REFERENCES users(id)
 );
 
 CREATE TABLE recipes(

@@ -3,6 +3,15 @@ const jwt = require('jsonwebtoken');
 const Table = require('../database/Table');
 
 const User = new Table("users");
+const Guest = new Table("guests");
+const Recipe = new Table("recipes");
+const Ingredient = new Table("ingredients");
+const UserRecipe = new Table("user_recipe");
+const RecipeIngredient = new Table("recipe_ingredient");
+const MealPlan = new Table("meal_plans");
+const GroceryList = new Table("lists")
+
+const { toSQLDatetime } = require('../utils/sql');
 
 function UserService() { }
 
@@ -79,14 +88,71 @@ UserService.prototype.deleteUser = async function (userId) {
     return true;
 }
 
-function generateToken(user) {
-    return jwt.sign({
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userName: user.userName,
-        email: user.email
-    }, process.env.TOKEN_SECRET);
+UserService.prototype.getGuest = async function () {
+    const now = new Date();
+    const notLoggedIn = guest => {
+        if(guest.loginAt === null) return true;
+        const msElapsed = Math.abs(new Date(guest.loginAt).getTime() - now.getTime());
+        const minutesElapsed = msElapsed / (60 * 1000);
+        return minutesElapsed > 5;
+    }
+    const guests = await Guest.getEntries();
+    const available = guests.find(notLoggedIn);
+    if(!available) throw new Error("No Guest Access Available. Please wait until a guest session expires. Guest sessions last for 15 minutes.")
+
+    const guest = await this.getUser(available.id);
+
+    //Delete everything from the previous guest
+    //1. Get all recipe ids related to this guest
+    const recipes = await UserRecipe.getEntries({ rows: { user_id: guest.id } });
+    //2. TODO: Get all ingredients related to each recipe
+    //3. TODO: Remove all ingredients which are not part of another users recipe
+    //4. Remove all recipes
+    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "");
+    recipeIds?.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
+    //5. Remove planned meals and grocery list items 
+    await MealPlan.removeEntries({ user_id: guest.id });
+    await GroceryList.removeEntries({ user_id: guest.id });
+    //Timestamp login and generate 15 minute token
+    await Guest.updateEntries({ id: available.id }, { loginAt: toSQLDatetime(now) });
+    guest.token = generateToken(guest, '5m');
+
+    return guest;
+}
+
+UserService.prototype.removeGuestResources = async function (guestId) {
+    const guest = await User.getEntry({ rows: { id: guestId } });
+
+    if(!guest || guest.type !== "guest") return;
+
+    //1. Get all recipe ids related to this guest
+    const recipes = await UserRecipe.getEntries({ rows: { user_id: guest.id } });
+    //2. TODO: Get all ingredients related to each recipe
+    //3. TODO: Remove all ingredients which are not part of another users recipe
+    //4. Remove all recipes
+    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "");
+    recipeIds?.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
+    //5. Remove planned meals and grocery list items 
+    await MealPlan.removeEntries({ user_id: guest.id });
+    await GroceryList.removeEntries({ user_id: guest.id });
+
+    await Guest.updateEntries({ id: guest.id }, { loginAt: null });
+}
+
+function generateToken(user, exp = null) {
+    const {id, firstName, lastName, userName, email, type } = user;
+    const payload = {};
+    if(id) payload.id = id;
+    if(firstName) payload.firstName = firstName;
+    if(lastName) payload.lastName = lastName;
+    if(userName) payload.userName = userName;
+    if(email) payload.email = email;
+    if(type) payload.type = type;
+
+    const options = {};
+    if(exp) options.expiresIn = exp;
+
+    return jwt.sign(payload, process.env.TOKEN_SECRET, options);
 }
 
 module.exports = UserService;

@@ -39,4 +39,23 @@ router.get('/login', authorizeJWT, async (req, res) => {
     }
 });
 
+router.get('/guest', async (req, res) => {
+    try {
+        const user = await service.getGuest();
+        return res.status(200).json(user);
+    } catch(err) {
+        return res.status(401).send(err.message);
+    }
+});
+
+router.get('/logout', authorizeJWT, async (req, res) => {
+    try {
+        const user = await service.getUser(req.user.id);
+        await service.removeGuestResources(user.id);
+        return res.send("Success");
+    } catch(err) {
+        return res.status(401).send(err.message);
+    }
+});
+
 module.exports = router;
