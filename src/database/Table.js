@@ -31,6 +31,7 @@ class Table {
     }
 
     getEntries({ rows = {}, columns = ["*"], joins = [], groupBy = "", orderBy = "" } = {}) {
+        if(Array.isArray(rows)) return database.select(this.tableName, rows, columns, { joins, groupBy, orderBy });
         return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins, groupBy, orderBy });
     }
 
@@ -39,6 +40,7 @@ class Table {
     }
 
     removeEntries(rows) {
+        if(Array.isArray(rows)) return database.delete(this.tableName, rows);
         return database.delete(this.tableName, keyValueArrayFromObject(rows));
     }
 }
