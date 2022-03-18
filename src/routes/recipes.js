@@ -8,7 +8,7 @@ const RecipeService = require('../services/RecipeService');
 const service = new RecipeService();
 
 const { validateRecipe } = require('../middlewares/validation');
-const { authorizeJWT, authorizeUser } = require('../middlewares/authorization');
+const { authorizeJWT, authorizeUser, authorizeGuestPost } = require('../middlewares/authorization');
 const { upload, uniqueFilename } = require('../middlewares/upload');
 
 const { formatRecipe } = require('../utils/format');
@@ -40,7 +40,7 @@ router.get('/:recipeId', authorizeUser, async (req, res) => {
     return res.status(404).send("Recipe not found!");
 });
 
-router.post('/', upload.single('photo'), validateRecipe, async (req, res) => {
+router.post('/', upload.single('photo'), validateRecipe, authorizeGuestPost, async (req, res) => {
     const recipeInfo = req.body;
 
     if (req.file) {

@@ -9,9 +9,11 @@ const validateRecipe = (req, res, next) => {
         "ingredients.*.amount":         "numeric",
         "ingredients.*.measurement":    "in:teaspoon,tablespoon,cup,ounce,pound,milligram,gram,kilogram,milliliter,liter,pint,quart,gallon,pinch,piece,slice,stick,clove,can,box,bag,package",
         "ingredients.*.size":           "in:small,medium,large",
-        "comments":                     "array"
+        "comments":                     "array",
+        "categories":                   "array"
     }
 
+    
     const body = JSON.parse(JSON.stringify(req.body));
     body.prep = JSON.parse(body.prep);
     body.cook = JSON.parse(body.cook);
@@ -21,6 +23,17 @@ const validateRecipe = (req, res, next) => {
     body.categories = (body.categories && JSON.parse(body.categories)) || null;
     req.body = body;
 
+    if(req.user.type === "guest") {
+        const limitedKeys = ['instructions', 'ingredients', 'categories', 'comments'];
+        const exceeded = [];
+        for(let key of limitedKeys) {
+            if(req.body[key]?.length > 10) {
+                exceeded.push(key);
+            }
+        }
+        if(exceeded.length > 0) return res.status(412).send("Validation Failed. Guest resource limit exceeded. The fields 'instructions', 'ingredients', 'categories', and 'comments' are limited to 10 items for guest accounts");
+    }
+    
     validator(body, validationRule, {}, (err, success) => {
         if (!success) {
             res.status(412).send("Validation failed.");

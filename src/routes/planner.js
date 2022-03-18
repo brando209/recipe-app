@@ -4,7 +4,7 @@ const router = express.Router();
 const PlannerService = require('../services/PlannerService');
 const service = new PlannerService();
 
-const { authorizeJWT } = require('../middlewares/authorization');
+const { authorizeJWT, authorizeGuestPost } = require('../middlewares/authorization');
 
 router.use(authorizeJWT);
 
@@ -13,7 +13,7 @@ router.get('/meal', async (req, res) => {
     mealPlan ? res.json(mealPlan) : [];
 });
 
-router.post('/meal', async (req, res) => {
+router.post('/meal', authorizeGuestPost, async (req, res) => {
     const plannedMeal = await service.addMealPlanItem(req.user.id, req.body);
     res.json(plannedMeal);
 });
@@ -33,7 +33,7 @@ router.get('/grocery', async (req, res) => {
     return list ? res.json(list) : res.status(404).send("No grocery list found");
 });
 
-router.post('/grocery', async (req, res) => {
+router.post('/grocery', authorizeGuestPost, async (req, res) => {
     const listItem = await service.addGroceryListItem(req.user.id, req.body);
     res.json(listItem);
 });
