@@ -10,7 +10,7 @@ router.use(authorizeJWT);
 
 router.get('/meal', async (req, res) => {
     const mealPlan = await service.getMealPlan(req.user.id);
-    mealPlan ? res.json(mealPlan) : [];
+    mealPlan ? res.json(mealPlan) : res.json([]);
 });
 
 router.post('/meal', authorizeGuestPost, async (req, res) => {
@@ -30,7 +30,7 @@ router.delete('/meal/:mealId', async (req, res) => {
 
 router.get('/grocery', async (req, res) => {
     const list = await service.getGroceryList(req.user.id);
-    return list ? res.json(list) : res.status(404).send("No grocery list found");
+    list ? res.json(list) : res.json([]);
 });
 
 router.post('/grocery', authorizeGuestPost, async (req, res) => {
