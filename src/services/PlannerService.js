@@ -53,7 +53,7 @@ PlannerService.prototype.getGroceryList = async function(userId) {
 PlannerService.prototype.addGroceryListItem = async function(userId, listItem) {
     const listExists = await GroceryList.hasEntry({ user_id: userId });
     const listId = listExists ?
-        await GroceryList.getEntry({ row: { user_id: userId }}).then(entry => entry.id) :
+        await GroceryList.getEntry({ rows: { user_id: userId }}).then(entry => entry.id) :
         await GroceryList.addEntry({ user_id: userId }).then(entry => entry.insertId);
     
     listItem.list_id = listId;
