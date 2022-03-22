@@ -21,7 +21,7 @@ PlannerService.prototype.getMealPlan = async function(userId) {
 PlannerService.prototype.addMealPlanItem = async function(userId, mealPlanItem) {
     const mealPlanExists = await MealPlan.hasEntry({ user_id: userId });
     const mealPlanId = mealPlanExists ?
-        await MealPlan.getEntry({ row: { user_id: userId }}).then(entry => entry.id) :
+        await MealPlan.getEntry({ rows: { user_id: userId }}).then(entry => entry.id) :
         await MealPlan.addEntry({ user_id: userId }).then(entry => entry.insertId);
     
     mealPlanItem = { plan_id: mealPlanId, recipe_id: mealPlanItem.recipeId, date: toSQLDatetime(mealPlanItem.date) }
