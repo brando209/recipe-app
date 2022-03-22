@@ -13,7 +13,6 @@ const validateRecipe = (req, res, next) => {
         "categories":                   "array"
     }
 
-    
     const body = JSON.parse(JSON.stringify(req.body));
     body.prep = JSON.parse(body.prep);
     body.cook = JSON.parse(body.cook);
@@ -31,7 +30,7 @@ const validateRecipe = (req, res, next) => {
                 exceeded.push(key);
             }
         }
-        if(exceeded.length > 0) return res.status(412).send("Validation Failed. Guest resource limit exceeded. The fields 'instructions', 'ingredients', 'categories', and 'comments' are limited to 10 items for guest accounts");
+        if(exceeded.length > 0) return res.status(412).send("Guest resource limit exceeded. The fields 'instructions', 'ingredients', 'categories', and 'comments' are limited to 10 items for guest accounts");
     }
     
     validator(body, validationRule, {}, (err, success) => {
