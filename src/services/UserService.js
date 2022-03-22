@@ -94,7 +94,7 @@ UserService.prototype.getGuest = async function () {
         if(guest.loginAt === null) return true;
         const msElapsed = Math.abs(new Date(guest.loginAt).getTime() - now.getTime());
         const minutesElapsed = msElapsed / (60 * 1000);
-        return minutesElapsed > 5;
+        return minutesElapsed > 15;
     }
     const guests = await Guest.getEntries();
     const available = guests.find(notLoggedIn);
@@ -115,7 +115,7 @@ UserService.prototype.getGuest = async function () {
     await GroceryList.removeEntries({ user_id: guest.id });
     //Timestamp login and generate 15 minute token
     await Guest.updateEntries({ id: available.id }, { loginAt: toSQLDatetime(now) });
-    guest.token = generateToken(guest, '5m');
+    guest.token = generateToken(guest, '15m');
 
     return guest;
 }
