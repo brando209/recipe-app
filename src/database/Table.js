@@ -30,9 +30,9 @@ class Table {
         return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins }).then(result => result[0]);
     }
 
-    getEntries({ rows = {}, columns = ["*"], joins = [], groupBy = "", orderBy = "" } = {}) {
-        if(Array.isArray(rows)) return database.select(this.tableName, rows, columns, { joins, groupBy, orderBy });
-        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins, groupBy, orderBy });
+    getEntries({ rows = {}, columns = ["*"], joins = [], groupBy = "", orderBy = "", rowOperator } = {}) {
+        if(Array.isArray(rows)) return database.select(this.tableName, rows, columns, { joins, groupBy, orderBy, rowOperator });
+        return database.select(this.tableName, keyValueArrayFromObject(rows), columns, { joins, groupBy, orderBy, rowOperator });
     }
 
     updateEntries(rows, updates) {
