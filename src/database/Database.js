@@ -4,6 +4,7 @@ const toArray = val => (val && val !== "*" && val !== "" && !Array.isArray(val))
 const escapeValue = value => Number.isNaN(Number(value)) && (value === null || value === undefined || value.trim().toLowerCase() === 'null') ? null : connection.escape(value);
 const escapeExpression = expression => {
     const [lhs, rhs] = expression.split("=");
+    if(!rhs) return `${lhs}`;
     return `${lhs}=${escapeValue(rhs)}`;
 }
 
