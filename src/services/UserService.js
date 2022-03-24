@@ -90,17 +90,10 @@ UserService.prototype.deleteUser = async function (userId) {
 
 UserService.prototype.getGuest = async function () {
     const now = new Date();
-    const notLoggedIn = guest => {
-        if(guest.loginAt === null) return true;
-        const msElapsed = Math.abs(new Date(guest.loginAt).getTime() - now.getTime());
-        const minutesElapsed = msElapsed / (60 * 1000);
-        return minutesElapsed > 15;
-    }
-    const guests = await Guest.getEntries();
-    const available = guests.find(notLoggedIn);
-    if(!available) throw new Error("No Guest Access Available. Please wait until a guest session expires. Guest sessions last for 15 minutes.")
+    const guests = await Guest.getEntries({ rows: ["loginAt IS NULL", "loginAt<DATE_SUB(NOW(), INTERVAL 15 MINUTE)"], rowOperator: "OR" });
+    if(guests.length === 0) throw new Error("No Guest Access Available. Please wait until a guest session expires. Guest sessions last for 15 minutes.")
 
-    const guest = await this.getUser(available.id);
+    const guest = await this.getUser(guests[0].id);
 
     //Delete everything from the previous guest
     //1. Get all recipe ids related to this guest
@@ -108,13 +101,13 @@ UserService.prototype.getGuest = async function () {
     //2. TODO: Get all ingredients related to each recipe
     //3. TODO: Remove all ingredients which are not part of another users recipe
     //4. Remove all recipes
-    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "");
-    recipeIds?.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
+    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "").toString();
+    recipeIds.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
     //5. Remove planned meals and grocery list items 
     await MealPlan.removeEntries({ user_id: guest.id });
     await GroceryList.removeEntries({ user_id: guest.id });
     //Timestamp login and generate 15 minute token
-    await Guest.updateEntries({ id: available.id }, { loginAt: toSQLDatetime(now) });
+    await Guest.updateEntries({ id: guest.id }, { loginAt: toSQLDatetime(now) });
     guest.token = generateToken(guest, '15m');
 
     return guest;
@@ -130,8 +123,8 @@ UserService.prototype.removeGuestResources = async function (guestId) {
     //2. TODO: Get all ingredients related to each recipe
     //3. TODO: Remove all ingredients which are not part of another users recipe
     //4. Remove all recipes
-    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "");
-    recipeIds?.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
+    const recipeIds = recipes.reduce((prev, curr) => (prev ? `${prev},${curr.recipe_id}` : curr.recipe_id), "").toString();
+    recipeIds.length > 0 && await Recipe.removeEntries([`id IN (${recipeIds})`]);
     //5. Remove planned meals and grocery list items 
     await MealPlan.removeEntries({ user_id: guest.id });
     await GroceryList.removeEntries({ user_id: guest.id });
