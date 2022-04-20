@@ -61,8 +61,8 @@ UserService.prototype.getUser = async function (userId) {
 }
 
 UserService.prototype.updateUser = async function (userId, updates) {
-    const { firstName, lastName } = updates;
-    await User.updateEntries({ id: userId }, { firstName, lastName });
+    const { firstName, lastName, theme } = updates;
+    await User.updateEntries({ id: userId }, { firstName, lastName, theme });
     return this.getUser(userId);
 }
 
