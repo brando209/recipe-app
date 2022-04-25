@@ -37,7 +37,6 @@ function RecipeService() { }
 
 RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
     //Convert time duration objects to ISO8601 string
-    console.log(recipeInfo);
     const prepTime = new Temporal.Duration(0, 0, 0, recipeInfo.prepTime.days, recipeInfo.prepTime.hours, recipeInfo.prepTime.minutes);
     const cookTime = new Temporal.Duration(0, 0, 0, recipeInfo.cookTime.days, recipeInfo.cookTime.hours, recipeInfo.cookTime.minutes);
     const totalTime = new Temporal.Duration(0, 0, 0, recipeInfo.totalTime.days, recipeInfo.totalTime.hours, recipeInfo.totalTime.minutes);
