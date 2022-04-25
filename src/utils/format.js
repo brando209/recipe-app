@@ -64,21 +64,10 @@ const formatInstructions = (instructions) => {
     return formatted;
 }
 
-//Assues all times will be in either hours or minutes
 const formatTime = (time) => {
     if(!time) return;
     const duration = iso8601Duration.parse(time);
-    if(duration.hours > 0) {
-        return {
-            time: duration.hours,
-            unit: "hr"
-        }
-    }
-
-    return {
-        time: duration.minutes,
-        unit: "min"
-    }
+    return { days: duration.days, hours: duration.hours, minutes: duration.minutes }
 }
 
 //Assumes if servings is an array then the first entry is the low value, while the second is a range. Ignores range.
@@ -101,9 +90,9 @@ const formatRecipe = (recipeInfo) => {
         categories: formatCategories(recipeInfo.recipeCuisine, recipeInfo.recipeCategory),
         ingredients: formatIngredients(recipeInfo.recipeIngredient),
         instructions: formatInstructions(recipeInfo.recipeInstructions),
-        cook: formatTime(recipeInfo.cookTime),
-        prep: formatTime(recipeInfo.prepTime),
-        total: formatTime(recipeInfo.totalTime),
+        cookTime: formatTime(recipeInfo.cookTime),
+        prepTime: formatTime(recipeInfo.prepTime),
+        totalTime: formatTime(recipeInfo.totalTime),
         serves: formatServings(recipeInfo.recipeYield),
         comments: []
     }

@@ -1,6 +1,12 @@
 const validator = require('../helpers/validator');
 
 const validateRecipe = (req, res, next) => {
+    const durationRule = {
+        days: "numeric|min:0|max:30",
+        hours: "numeric|min:0|max:24",
+        minutes: "numeric|min:0|max:480"
+    }
+
     const validationRule = {
         "title":                        "required|string|min:3|max:96",
         "description":                  "string|min:3|max:512",
@@ -9,15 +15,19 @@ const validateRecipe = (req, res, next) => {
         "ingredients.*.amount":         "numeric",
         "ingredients.*.measurement":    "in:teaspoon,tablespoon,cup,ounce,pound,milligram,gram,kilogram,milliliter,liter,pint,quart,gallon,pinch,piece,slice,stick,clove,can,box,bag,package",
         "ingredients.*.size":           "in:small,medium,large",
+        "prepTime":                     durationRule,
+        "cookTime":                     durationRule,
+        "totalTime":                    durationRule,
         "comments":                     "array",
         "categories":                   "array"
     }
 
     const body = JSON.parse(JSON.stringify(req.body));
-    body.prep = JSON.parse(body.prep);
-    body.cook = JSON.parse(body.cook);
     body.instructions = JSON.parse(body.instructions);
     body.ingredients = JSON.parse(body.ingredients);
+    body.prepTime = JSON.parse(body.prepTime);
+    body.cookTime = JSON.parse(body.cookTime);
+    body.totalTime = JSON.parse(body.totalTime);
     body.comments = (body.comments && JSON.parse(body.comments)) || null;
     body.categories = (body.categories && JSON.parse(body.categories)) || null;
     req.body = body;

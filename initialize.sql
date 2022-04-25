@@ -22,10 +22,9 @@ CREATE TABLE recipes(
     instructions TEXT NOT NULL,
     description TEXT,
     serves INT NOT NULL,
-    prepTime INT NOT NULL,
-    prepUnit ENUM('min', 'hr') DEFAULT 'min',
-    cookTime INT NOT NULL,
-    cookUnit ENUM('min', 'hr') DEFAULT 'min',
+    prepTime VARCHAR(32) NOT NULL DEFAULT "PT0S",
+    cookTime VARCHAR(32) NOT NULL DEFAULT "PT0S",
+    totalTime VARCHAR(32) NOT NULL DEFAULT "PT0S",
     comments TEXT
 );
 

@@ -1,3 +1,6 @@
+const { Temporal } = require('@js-temporal/polyfill');
+const iso8601Duration = require('iso8601-duration');
+
 const Table = require('../database/Table');
 
 const Recipe = new Table('recipes');
@@ -9,10 +12,9 @@ const UserRecipe = new Table('user_recipe');
 const Photo = new Table('photos');
 
 const columnsArray = [
-    'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments', 'SUM(DISTINCT u_r.favorite) as favorite',
+    'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments',
+    'recipes.prepTime', 'recipes.cookTime', 'recipes.totalTime', 'SUM(DISTINCT u_r.favorite) as favorite',
     'JSON_OBJECTAGG("data", JSON_OBJECT("path", p.path, "mimetype", p.mimetype)) as photo',
-    'JSON_OBJECT("time", recipes.prepTime, "unit", recipes.prepUnit) as prep',
-    'JSON_OBJECT("time", recipes.cookTime, "unit", recipes.cookUnit) as cook',
     'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "quantity", ri.quantity, "unit", ri.unit, "size", ri.size)) as ingredients'
 ];
 
@@ -34,16 +36,19 @@ const joinsArray = [{
 function RecipeService() { }
 
 RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
+    //Convert time duration objects to ISO8601 string
+    console.log(recipeInfo);
+    const prepTime = new Temporal.Duration(0, 0, 0, recipeInfo.prepTime.days, recipeInfo.prepTime.hours, recipeInfo.prepTime.minutes);
+    const cookTime = new Temporal.Duration(0, 0, 0, recipeInfo.cookTime.days, recipeInfo.cookTime.hours, recipeInfo.cookTime.minutes);
+    const totalTime = new Temporal.Duration(0, 0, 0, recipeInfo.totalTime.days, recipeInfo.totalTime.hours, recipeInfo.totalTime.minutes);
     //Add an entry in the recipe table
     const newRecipe = await Recipe.addEntry({
         title: recipeInfo.title.trim(),
         instructions: recipeInfo.instructions.join("|"),
         description: recipeInfo.description?.trim() || null,
-        //TODO: Store prep and cook times as iso8601 duration
-        prepTime: recipeInfo.prep.time || 0,
-        prepUnit: recipeInfo.prep.unit,
-        cookTime: recipeInfo.cook.time || 0,
-        cookUnit: recipeInfo.cook.unit,
+        prepTime: prepTime.toString(),
+        cookTime: cookTime.toString(),
+        totalTime: totalTime.toString(),
         serves: recipeInfo.serves,
         comments: (recipeInfo.comments && recipeInfo.comments.length > 0) ? recipeInfo.comments.join("|") : null
     });
@@ -120,10 +125,15 @@ RecipeService.prototype.getRecipes = async function (userId) {
             }]
         });
 
+        const prepTime = iso8601Duration.parse(recipe.prepTime);
+        const cookTime = iso8601Duration.parse(recipe.cookTime);
+        const totalTime = iso8601Duration.parse(recipe.totalTime);
+
         return {
             ...recipe,
-            prep: JSON.parse(recipe.prep),
-            cook: JSON.parse(recipe.cook),
+            prepTime: { days: prepTime.days, hours: prepTime.hours, minutes: prepTime.minutes },
+            cookTime: { days: cookTime.days, hours: cookTime.hours, minutes: cookTime.minutes },
+            totalTime: { days: totalTime.days, hours: totalTime.hours, minutes: totalTime.minutes },
             ingredients: JSON.parse(recipe.ingredients),
             instructions: recipe.instructions.split("|"),
             comments: recipe.comments && recipe.comments.split("|"),
@@ -154,10 +164,15 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
         }]
     });
 
+    const prepTime = iso8601Duration.parse(recipe.prepTime);
+    const cookTime = iso8601Duration.parse(recipe.cookTime);
+    const totalTime = iso8601Duration.parse(recipe.totalTime);
+
     return {
         ...recipe,
-        prep: JSON.parse(recipe.prep),
-        cook: JSON.parse(recipe.cook),
+        prepTime: { days: prepTime.days, hours: prepTime.hours, minutes: prepTime.minutes },
+        cookTime: { days: cookTime.days, hours: cookTime.hours, minutes: cookTime.minutes },
+        totalTime: { days: totalTime.days, hours: totalTime.hours, minutes: totalTime.minutes },
         ingredients: JSON.parse(recipe.ingredients),
         instructions: recipe.instructions.split("|"),
         comments: recipe.comments && recipe.comments.split("|"),
@@ -168,23 +183,18 @@ RecipeService.prototype.getRecipe = async function (recipeId, userId) {
 }
 
 RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId) {
-    const { title, description, instructions, comments, serves, prep, cook, categories, ingredients, favorite } = updates;
-    const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prep || cook;
+    const { title, description, instructions, comments, serves, prepTime, cookTime, totalTime, categories, ingredients, favorite } = updates;
+    const isUpdatingRecipeInfo = title || description || instructions || comments || serves || prepTime || cookTime || totalTime;
     
     const update = {};
     if(title) update.title = title.trim();
     if(description) update.description = description.trim();
-    if(serves) update.serves = serves;
     if(instructions) update.instructions = instructions.join("|");
     if(comments) update.comments = comments.join("|");
-    if(prep) {
-        update.prepTime = prep.time;
-        update.prepUnit = prep.unit;
-    };
-    if(cook) {
-        update.cookTime = cook.time;
-        update.cookUnit = cook.unit;
-    };
+    if(serves) update.serves = serves;
+    if(prepTime) update.prepTime = new Temporal.Duration(0, 0, 0, prepTime.days, prepTime.hours, prepTime.minutes);
+    if(cookTime) update.cookTime = new Temporal.Duration(0, 0, 0, cookTime.days, cookTime.hours, cookTime.minutes);
+    if(totalTime) update.totalTime = new Temporal.Duration(0, 0, 0, totalTime.days, totalTime.hours, totalTime.minutes);
 
     //Update recipe information
     isUpdatingRecipeInfo && await Recipe.updateEntries({ id: recipeId }, update);
@@ -228,7 +238,6 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
             size: ingredientSize,
         })
     }
-
     //Update category information
     for(let name in categories) {
         const categoryName = name.trim().toLowerCase();
