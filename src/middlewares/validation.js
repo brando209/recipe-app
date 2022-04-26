@@ -21,15 +21,14 @@ const validateRecipe = (req, res, next) => {
         "comments":                     "array",
         "categories":                   "array"
     }
-
     const body = JSON.parse(JSON.stringify(req.body));
-    body.instructions = JSON.parse(JSON.stringify(body.instructions));
-    body.ingredients = JSON.parse(JSON.stringify(body.ingredients));
-    body.prepTime = JSON.parse(JSON.stringify(body.prepTime));
-    body.cookTime = JSON.parse(JSON.stringify(body.cookTime));
-    body.totalTime = JSON.parse(JSON.stringify(body.totalTime));
-    body.comments = (body.comments && JSON.parse(JSON.stringify(body.comments))) || null;
-    body.categories = (body.categories && JSON.parse(JSON.stringify(body.categories))) || null;
+    body.instructions = JSON.parse(body.instructions);
+    body.ingredients = JSON.parse(body.ingredients);
+    body.prepTime = JSON.parse(body.prepTime) || null;
+    body.cookTime = JSON.parse(body.cookTime) || null;
+    body.totalTime = JSON.parse(body.totalTime) || null;
+    body.comments = (body.comments && JSON.parse(body.comments)) || null;
+    body.categories = (body.categories && JSON.parse(body.categories)) || null;
     req.body = body;
 
     if(req.user.type === "guest") {
@@ -43,8 +42,10 @@ const validateRecipe = (req, res, next) => {
         if(exceeded.length > 0) return res.status(412).send("Guest resource limit exceeded. The fields 'instructions', 'ingredients', 'categories', and 'comments' are limited to 10 items for guest accounts");
     }
     
+
     validator(body, validationRule, {}, (err, success) => {
         if (!success) {
+            console.log(err);
             res.status(412).send("Validation failed.");
         } else {
             next();
