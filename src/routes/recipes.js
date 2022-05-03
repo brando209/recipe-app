@@ -48,7 +48,6 @@ router.get('/:recipeId', authorizeUser, async (req, res) => {
 router.post('/', upload.single('photo'), validateRecipe, authorizeGuestPost, async (req, res) => {
     const recipeInfo = req.body;
 
-    console.log(recipeInfo);
     if (req.file) {
         //A File object was recieved
         recipeInfo.photo = {

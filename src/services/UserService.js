@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { Temporal } = require('@js-temporal/polyfill');
 const Table = require('../database/Table');
 
 const User = new Table("users");
@@ -89,7 +90,7 @@ UserService.prototype.deleteUser = async function (userId) {
 }
 
 UserService.prototype.getGuest = async function () {
-    const now = new Date();
+    const now = Temporal.Now.plainDateTimeISO().toString().slice(0, 19) + "Z";
     const guests = await Guest.getEntries({ rows: ["loginAt IS NULL", "loginAt<DATE_SUB(NOW(), INTERVAL 15 MINUTE)"], rowOperator: "OR" });
     if(guests.length === 0) throw new Error("No Guest Access Available. Please wait until a guest session expires. Guest sessions last for 15 minutes.")
 

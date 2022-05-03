@@ -1,3 +1,5 @@
-const toSQLDatetime = (date) => new Date(date).toISOString().slice(0, 19).replace('T', ' ');
+const { Temporal } = require('@js-temporal/polyfill');
+
+const toSQLDatetime = (date) => Temporal.Instant.from(date).toString().slice(0, 19).replace('T', ' ');
 
 module.exports = { toSQLDatetime }
