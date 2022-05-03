@@ -112,7 +112,7 @@ RecipeService.prototype.getRecipes = async function (userId) {
         groupBy: 'recipes.id'
     });
 
-    if (!recipes.length) return;
+    if (!recipes.length) return Promise.resolve([]);
 
     const recipePromises = recipes.map(async recipe => {
         const categories = await RecipeCategory.getEntries({
