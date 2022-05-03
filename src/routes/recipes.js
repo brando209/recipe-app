@@ -23,14 +23,19 @@ router.get('/', async (req, res) => {
 
 router.get('/import', async (req, res) => {
     console.log("Attempting to import recipe from:", req.query.importUrl);
-    const html = await fetch(req.query.importUrl).then(response => response.text());
-    const root = htmlParser.parse(html);
-    
-    const recipeJsonld = await extractRecipeJsonld(root);
+    try {    
+        const html = await fetch(req.query.importUrl).then(response => response.text());
+        const root = htmlParser.parse(html);
+        
+        const recipeJsonld = await extractRecipeJsonld(root);
 
-    const recipeInfo = formatRecipe(recipeJsonld);
+        const recipeInfo = formatRecipe(recipeJsonld);
 
-    res.json(recipeInfo);
+        res.json(recipeInfo);
+    } catch(err) {
+        console.log(err);
+        res.status(500).send(err.message);
+    }
 });
 
 router.get('/:recipeId', authorizeUser, async (req, res) => {
@@ -43,6 +48,7 @@ router.get('/:recipeId', authorizeUser, async (req, res) => {
 router.post('/', upload.single('photo'), validateRecipe, authorizeGuestPost, async (req, res) => {
     const recipeInfo = req.body;
 
+    console.log(recipeInfo);
     if (req.file) {
         //A File object was recieved
         recipeInfo.photo = {
