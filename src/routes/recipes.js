@@ -29,6 +29,8 @@ router.get('/import', async (req, res) => {
         
         const recipeJsonld = await extractRecipeJsonld(root);
 
+        if(!recipeJsonld) throw new Error(`Unable to import recipe information from: ${req.query.importUrl}. This is either because no recipe exists at this website or because Recipe App does not currently support importing from this website.`)
+
         const recipeInfo = formatRecipe(recipeJsonld);
 
         res.json(recipeInfo);
