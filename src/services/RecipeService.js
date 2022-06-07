@@ -15,7 +15,7 @@ const columnsArray = [
     'recipes.id', 'recipes.title', 'recipes.description', 'recipes.serves', 'recipes.instructions', 'recipes.comments',
     'recipes.prepTime', 'recipes.cookTime', 'recipes.totalTime', 'SUM(DISTINCT u_r.favorite) as favorite',
     'JSON_OBJECTAGG("data", JSON_OBJECT("path", p.path, "mimetype", p.mimetype)) as photo',
-    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "quantity", ri.quantity, "unit", ri.unit, "size", ri.size)) as ingredients'
+    'JSON_ARRAYAGG(JSON_OBJECT("name", i.name, "id", i.id, "quantity", ri.quantity, "unit", ri.unit, "size", ri.size, "comment", ri.comment)) as ingredients'
 ];
 
 const joinsArray = [{
@@ -73,6 +73,7 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
         const ingredientQuantity = (ingredient.quantity && ingredient.quantity !== "") ? ingredient.quantity : null;
         const ingredientUnit = (ingredient.unit && ingredient.unit !== "") ? ingredient.unit : null;
         const ingredientSize = (ingredient.size && ingredient.size !== "") ? ingredient.size : null;
+        const ingredientComment = ingredient.comment;
 
         //Add entry into recipe_ingredient table which relates this ingedient to the recipe
         await RecipeIngredient.addEntry({
@@ -81,6 +82,7 @@ RecipeService.prototype.addRecipe = async function (recipeInfo, creatorId) {
             quantity: ingredientQuantity,
             unit: ingredientUnit,
             size: ingredientSize,
+            comment: ingredientComment
         });
     }
 
@@ -220,11 +222,12 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
         const ingredientQuantity = (ingredients[name]?.quantity !== "") ? ingredients[name]?.quantity : null;
         const ingredientUnit = (ingredients[name]?.unit !== "") ? ingredients[name]?.unit : null;
         const ingredientSize = (ingredients[name]?.size !== "") ? ingredients[name]?.size : null;
+        const ingredientComment = ingredients[name]?.comment;
         
         if(existsInRecipe) {
             await RecipeIngredient.updateEntries(
                 { recipe_id: recipeId, ingredient_id: ingredientId },
-                { quantity: ingredientQuantity, unit: ingredientUnit, size: ingredientSize }
+                { quantity: ingredientQuantity, unit: ingredientUnit, size: ingredientSize, comment: ingredientComment }
             );
             continue;
         }
@@ -235,6 +238,7 @@ RecipeService.prototype.updateRecipe = async function (recipeId, updates, userId
             quantity: ingredientQuantity,
             unit: ingredientUnit,
             size: ingredientSize,
+            comment: ingredientComment
         })
     }
     //Update category information
