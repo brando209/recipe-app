@@ -22,7 +22,7 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.17.1",
-    "ingredientparserjs": "^1.1.2",
+    "ingredientparserjs": "^1.2.0",
     "iso8601-duration": "^1.3.0",
     "jsonld": "^5.0.0",
     "jsonwebtoken": "^8.5.1",

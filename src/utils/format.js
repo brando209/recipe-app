@@ -23,41 +23,54 @@ const formatCategories = (cuisines, others) => {
 const formatIngredients = (ingredients) => {
     const formatted = [];
     for(let ingredient of ingredients) {
-        const { name, measurement: { quantity, unit } } = recipeIngredientParser.parse(ingredient);
-        const unitIsSize = ['small', 'medium', 'large'].includes(unit);
+        let { name, measurement, hasAlternativeIngredients, hasAddedMeasurements, additional } = recipeIngredientParser.parse(ingredient);
+        const alternateIngredientNames = hasAlternativeIngredients ? name.splice(1, name.length - 1) : null;
+        name = hasAlternativeIngredients ? name[0] : name;
+        let quantity = measurement?.quantity;
+        let unitIsSize = ['small', 'medium', 'large'].includes(measurement?.unit);
+        let unit = unitIsSize ? null : measurement?.unit;
+        let size = unitIsSize ? measurement?.unit : null;
+        
+        //If there are added measurements in the ingredient(i.e. '1 tbsp + 1 tsp'), then quantity, unit, and size become arrays
+        //where the ith entry of each correspond to the ith measurement(i.e. quantity[0], unit[0], and size[0] describe the first measurement,
+        //quantity[1], unit[1], and size[1] describe the second measurement, and so on)
+        if(hasAddedMeasurements) {
+            quantity = [];
+            unit = [];
+            size = [];
+            measurement.forEach(meas => {
+                unitIsSize = ['small', 'medium', 'large'].includes(meas?.unit)
+                quantity.push(meas?.quantity);
+                unit.push(unitIsSize ? null : meas?.unit);
+                size.push(unitIsSize ? meas?.unit : null);
+            })
+        }
+
         formatted.push({
             name: name,
             quantity: quantity,
-            unit: unitIsSize ? null : unit,
-            size: unitIsSize ? unit : null,
-            comment: ""
+            unit: unit,
+            size: size,
+            comment: additional,
+            alternateIngredients: alternateIngredientNames
         })
     }
-
+    
     return formatted;
 }
 
 const formatInstructions = (instructions) => {
     const formatted = [];
-    let i = 0;
 
-    //Sometimes instructions will be divided into sections, ex. Chicken wings & Buffalo sauce
-    //If these exists we will have a 2-D array for our instructions where the first entry of each
-    //inner array is the name of the section and the rest of the entries are the instructions for that section
-    if(instructions[0].type === "HowToSection") {
-        for(let section of instructions) {
-            // const sectionInstructions = [section.name];
-            for(let instruction of section.itemListElement) {
-                formatted.push(cleanString(instruction.text)); 
-            }
-            // formatted.push(sectionInstructions);
-        }
-    }
-
-    //If there are no sections, we have a single array for our instructions
-    if(instructions[0].type === "HowToStep") {
-        for(let instruction of instructions) {
+    for(let instruction of instructions) {
+        if(instruction.type === "HowToStep") {
             formatted.push(cleanString(instruction.text));
+        }
+
+        if(instruction.type === "HowToSection") {
+            for(let step of instruction.itemListElement) {
+                formatted.push(cleanString(step.text)); 
+            }
         }
     }
 
