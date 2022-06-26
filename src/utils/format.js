@@ -23,7 +23,8 @@ const formatCategories = (cuisines, others) => {
 const formatIngredients = (ingredients) => {
     const formatted = [];
     for(let ingredient of ingredients) {
-        let { name, measurement, hasAlternativeIngredients, hasAddedMeasurements, additional } = recipeIngredientParser.parse(ingredient);
+        const parsedIngredient = recipeIngredientParser.parse(ingredient);
+        let { name, measurement, hasAlternativeIngredients, hasAddedMeasurements, additional } = parsedIngredient;
         const alternateIngredientNames = hasAlternativeIngredients ? name.splice(1, name.length - 1) : null;
         name = hasAlternativeIngredients ? name[0] : name;
         let quantity = measurement?.quantity;

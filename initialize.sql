@@ -50,10 +50,11 @@ CREATE TABLE recipe_ingredient(
     unit ENUM(
         'teaspoon', 'tablespoon', 'cup',
         'ounce', 'pound', 'milligram', 'gram', 'kilogram',
-        'liter', 'milliliter', 'quart', 'pint', 'gallon',
-        'pinch', 'piece',
-        'slice', 'stick', 'clove',
-        'can', 'box', 'bag', 'package', 'bunch'
+        'liter', 'milliliter', 'quart', 'pint', 'gallon', 'fluid ounce',
+        'dash', 'drop', 'pinch', 'piece',
+        'slice', 'stick', 'sprig', 'clove', 'crown', 'ear', 'head',
+        'centimeter', 'inch', 'foot',
+        'can', 'carton', 'container', 'box', 'bag', 'pack', 'package', 'bunch'
     ),
     size ENUM('small', 'medium', 'large'),
     comment VARCHAR(255) DEFAULT NULL,
