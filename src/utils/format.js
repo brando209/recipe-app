@@ -63,14 +63,23 @@ const formatIngredients = (ingredients) => {
 const formatInstructions = (instructions) => {
     const formatted = [];
 
-    for(let instruction of instructions) {
-        if(instruction.type === "HowToStep") {
-            formatted.push(cleanString(instruction.text));
-        }
+    if(Array.isArray(instructions)) {
+        for(let instruction of instructions) {
+            if(instruction.type === "HowToStep") {
+                formatted.push(cleanString(instruction.text));
+            }
 
-        if(instruction.type === "HowToSection") {
-            for(let step of instruction.itemListElement) {
-                formatted.push(cleanString(step.text)); 
+            if(instruction.type === "HowToSection") {
+                for(let step of instruction.itemListElement) {
+                    console.log(step);
+                    formatted.push(cleanString(step.text)); 
+                }
+            }
+        }
+    } else {
+        if(instructions.type === "HowToSection" && instructions.itemListElement.type === "HowToStep") {
+            for(let step of instructions.itemListElement.itemListElement) {
+                formatted.push(cleanString(step.text));
             }
         }
     }
@@ -86,8 +95,9 @@ const formatTime = (time) => {
 
 //Assumes if servings is an array then the first entry is the low value, while the second is a range. Ignores range.
 const formatServings = (servings) => {
-    if(Array.isArray(servings)) return Number(servings[0]);
-    return Number(servings);
+    if(!servings) return 0;
+    if(Array.isArray(servings)) return Number(servings[0].replace(/\D*/g, ""));
+    return Number(servings.replace(/\D*/g, ""));
 }
 
 const formatPhoto = (photos) => {
@@ -98,8 +108,8 @@ const formatPhoto = (photos) => {
 
 const formatRecipe = (recipeInfo) => {
     return {
-        title: recipeInfo.name,
-        description: recipeInfo.description,
+        title: cleanString(recipeInfo.name),
+        description: cleanString(recipeInfo.description),
         photo: formatPhoto(recipeInfo.image),
         categories: formatCategories(recipeInfo.recipeCuisine, recipeInfo.recipeCategory),
         ingredients: formatIngredients(recipeInfo.recipeIngredient),
