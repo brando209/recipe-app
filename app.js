@@ -33,6 +33,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'build')));
 
 app.get('*', (req, res) => {
+    console.log(req.params);
     res.sendFile(path.join(__dirname, 'build', 'index.html'))
 });
 
