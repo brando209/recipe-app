@@ -31,6 +31,7 @@ app.use('/api/planner', plannerRouter);
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(express.static(path.join(__dirname, 'build')));
+app.use('/recipe/*', express.static(path.join(__dirname, 'build')));
 
 app.get('*', (req, res) => {
     console.log(req.params);
